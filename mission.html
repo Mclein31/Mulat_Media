@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission — MULAT MEDIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="mission.css">
+</head>
+<body>
+
+<!-- TOP UTILITY NAV -->
+<nav class="utility-nav" aria-label="Utility navigation">
+  <div class="wrap">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="mission.html" class="active">Mission</a>
+    <a href="vision.html">Vision</a>
+    <a href="core-values.html">Core Values</a>
+    <a href="members.html">Members</a>
+  </div>
+</nav>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="date-line">Independent Digital Media Publication — Est. 2026</div>
+  <h1 class="logo">Mulat Media</h1>
+  <p class="tagline">Stories That Inform. Voices That Matter.</p>
+</header>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="wrap">
+    <span class="eyebrow">Mission</span>
+    <h1>Our Purpose, In Plain Words</h1>
+    <p class="statement">"Mulat Media's mission is to inform, empower, and connect the Student community through responsible student journalism and multimedia broadcasting."</p>
+  </div>
+</section>
+
+<!-- MISSION INTRO -->
+<section class="mission-intro">
+  <div class="wrap">
+    <p>To inform and engage students and communities through accurate, accessible, and entertaining digital news. We aim to amplify the voices of Filipino students, develop their skills in responsible journalism, and connect campus issues to important national conversations. Lastly, our main mission is to make our platform not exclusive to ourselves, but open to all aspiring and responsible citizens of the future, giving everyone an opportunity to learn, participate, and share their voices.</p>
+  </div>
+</section>
+
+<!-- MISSION PILLARS -->
+<section class="mission-pillars">
+  <div class="wrap">
+    <div class="section-label"><span>How We Carry It Out</span></div>
+    <div class="pillar-grid">
+      <article class="pillar">
+        <span class="pillar-num">01</span>
+        <h3>Report Responsibly</h3>
+        <p>We verify before we publish. Every story is checked for accuracy, context, and fairness before it reaches a reader.</p>
+      </article>
+      <article class="pillar">
+        <span class="pillar-num">02</span>
+        <h3>Represent Fairly</h3>
+        <p>We seek out perspectives beyond our own newsroom, so our coverage reflects the full range of the community we report on.</p>
+      </article>
+      <article class="pillar">
+        <span class="pillar-num">03</span>
+        <h3>Engage Meaningfully</h3>
+        <p>We publish to start conversations, not end them — inviting readers to respond, question, and get involved.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION IMPACT -->
+<section class="mission-impact">
+  <div class="wrap">
+    <div class="grid-layout">
+      <figure></figure>
+      <div>
+        <h2>Journalism With a Purpose</h2>
+        <p>Behind every issue is a team asking the same question: does this serve our readers? That question shapes what we cover, how we cover it, and why we keep showing up to newsroom meetings long after the deadline has passed.</p>
+        <p>Our mission isn't a statement we wrote once and forgot — it's the standard every contributor is trained on and held to, issue after issue.</p>
+        <a href="core-values.html" class="read-more">See Our Core Values →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">Mulat Media</div>
+        <div class="footer-tagline">Independent Digital Media Publication</div>
+      </div>
+      <div class="footer-links">
+        <a href="about.html">About</a>
+        <a href="mission.html">Mission</a>
+        <a href="vision.html">Vision</a>
+        <a href="core-values.html">Core Values</a>
+        <a href="members.html">Members</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MULAT MEDIA. All Rights Reserved.</span>
+      <span>hello@mulatmedia.org</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const toggle = document.getElementById('menuToggle');
+  const nav = document.getElementById('primaryNav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', isOpen);
+    });
+  }
+</script>
+</body>
+</html>

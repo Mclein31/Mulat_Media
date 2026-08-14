@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — MULAT MEDIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="about.css">
+</head>
+<body>
+
+<!-- TOP UTILITY NAV -->
+<nav class="utility-nav" aria-label="Utility navigation">
+  <div class="wrap">
+    <a href="index.html">Home</a>
+    <a href="about.html" class="active">About</a>
+    <a href="mission.html">Mission</a>
+    <a href="vision.html">Vision</a>
+    <a href="core-values.html">Core Values</a>
+    <a href="members.html">Members</a>
+  </div>
+</nav>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="date-line">Independent Digital Media Publication — Est. 2026</div>
+  <h1 class="logo">Mulat Media</h1>
+  <p class="tagline">Stories That Inform. Voices That Matter.</p>
+</header>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="wrap">
+    <span class="eyebrow">About</span>
+    <h1>Who We Are</h1>
+    <p class="statement">"A media network that informs, empowers, and gives the community a voice, and are not just reliable about knowing what happened, but also about understanding why it matters."</p>
+  </div>
+</section>
+
+<!-- ABOUT STORY -->
+<section class="about-story">
+  <div class="wrap">
+    <div class="grid-layout">
+      <figure></figure>
+      <div>
+        <span class="kicker">Our Beginning</span>
+        <h2>A small idea that grew into a full newsroom.</h2>
+        <p>MULAT MEDIA began as a shared interest among a handful of students. </p>
+        <p>
+          "Mulat" is a Filipino word associated with being: Awake, Aware, Conscious of what is happening around us</p>
+        <p>
+          While "Media" represents our different ways of sharing information: Broadcasting, Social media, Video, Photography, Digital stories
+        </p>
+        <p>
+          It's goal is to open people's eyes through responsible media, and to look beyond headlines, ask questions, and understand the story.
+        </p>
+        <a href="mission.html" class="read-more">Read Our Mission →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APPROACH -->
+<section class="approach">
+  <div class="wrap">
+    <div class="section-label"><span>How the Newsroom Works</span></div>
+    <div class="approach-grid">
+      <article class="approach-card">
+        <span class="pillar-num">01</span>
+        <h3>Report</h3>
+        <p>Writers and photographers gather stories from across campus — verifying sources, checking facts, and following leads with care.</p>
+      </article>
+      <article class="approach-card">
+        <span class="pillar-num">02</span>
+        <h3>Edit</h3>
+        <p>Every draft passes through our editorial team, where clarity, fairness, and accuracy are checked before a single word goes public.</p>
+      </article>
+      <article class="approach-card">
+        <span class="pillar-num">03</span>
+        <h3>Publish</h3>
+        <p>Designers and editors bring each story to its final form, shaping it into an issue our readers can trust and return to.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ORIGIN / WHO WE ARE -->
+<section class="origin-band">
+  <div class="wrap">
+    <div class="grid-layout">
+      <div>
+        <span class="kicker">Who Makes Mulat Media</span>
+        <h2>A community built on communication and craft.</h2>
+        <p class="pull">"Every byline here belongs to someone who cared enough to get the story right."</p>
+      </div>
+      <div class="origin-body">
+        <p>MULAT MEDIA brings together a community of individuals committed to communication, storytelling, creativity, and responsible media. Writers, photographers, designers, and editors each bring their own craft to the newsroom, working under one shared editorial standard.</p>
+        <p>We're a training ground as much as we are a publication — a place where students build real skills in journalism, design, and media literacy while producing work that matters to the community around them.</p>
+        <a href="members.html" class="read-more">Meet the Newsroom →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>Want to know where we're headed?</h2>
+    <p>Our vision and core values outline the standards behind every story we publish.</p>
+    <a href="vision.html" class="btn">Read Our Vision</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">Mulat Media</div>
+        <div class="footer-tagline">Independent Digital Media Publication</div>
+      </div>
+      <div class="footer-links">
+        <a href="about.html">About</a>
+        <a href="mission.html">Mission</a>
+        <a href="vision.html">Vision</a>
+        <a href="core-values.html">Core Values</a>
+        <a href="members.html">Members</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MULAT MEDIA. All Rights Reserved.</span>
+      <span>hello@mulatmedia.org</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const toggle = document.getElementById('menuToggle');
+  const nav = document.getElementById('primaryNav');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', isOpen);
+    });
+  }
+</script>
+</body>
+</html>
