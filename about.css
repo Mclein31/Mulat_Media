@@ -103,10 +103,18 @@
     align-items:center;
   }
   .about-story figure{
+    width:100%;
     aspect-ratio:4/5;
-    background:#0f1e33 url('https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
+    max-height:560px;
     border:1px solid var(--hairline);
     margin:0;
+    overflow:hidden;
+  }
+  .about-story figure img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
   }
   .about-story .kicker{
     font-family:'DM Sans', sans-serif;
