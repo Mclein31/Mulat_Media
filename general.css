@@ -5,10 +5,16 @@
     --coastal-teal:#1F7A78;
     --aquatic-teal:#3AA6A0;
     --electric-teal:#00B3A4;
-    --paper:#f3f3f3;
+    --paper:#ECF0F1;
     --paper-dim:#F3F1EC;
-    --hairline:#D8D5CC;
+    --hairline:#BDC3C7;
     --ink-soft:#5B6472;
+    --ink-soft2:#a9abae;
+    --dark-slate:#2C3E50;
+    --blue-slate:#34495E;
+    --muted-gray:#7F8C8D;
+    --light-gray:#BDC3C7;
+    --off-white:#ECF0F1;
   }
 
   *{box-sizing:border-box;}
@@ -60,16 +66,17 @@
 
   /* ============ MASTHEAD ============ */
   .masthead{
+    background-color: var(--off-white);
     text-align:center;
     padding:38px 32px 28px;
-    border-bottom:1px solid var(--hairline);
+    border-bottom:1px solid var(--light-gray);
   }
   .masthead .live-date{
     font-family:'DM Sans', sans-serif;
     font-size:11px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:var(--ink-soft);;
+    color:var(--blue-slate);
     font-weight:600;
     margin-bottom:6px;
   }
@@ -78,7 +85,7 @@
     font-size:11px;
     letter-spacing:.14em;
     text-transform:uppercase;
-    color:var(--ink-soft);
+    color:var(--muted-gray);
     margin-bottom:18px;
   }
   .logo{
@@ -87,7 +94,7 @@
     font-size:clamp(40px, 7vw, 76px);
     letter-spacing:.02em;
     text-transform:uppercase;
-    color:var(--stormy);
+    color:var(--dark-slate);
     margin:0;
     line-height:1;
   }
@@ -96,7 +103,7 @@
     font-size:13px;
     letter-spacing:.1em;
     text-transform:uppercase;
-    color:var(--coastal-teal);
+    color:var(--muted-gray);
     margin-top:12px;
     font-weight:500;
   }
