@@ -1,137 +1,5 @@
-:root{
-    --stormy:#1B2A44;
-    --chesapeake:#2C4A6E;
-    --ultramarine:#1E4FA0;
-    --coastal-teal:#1F7A78;
-    --aquatic-teal:#3AA6A0;
-    --electric-teal:#00B3A4;
-    --paper:#f3f3f3;
-    --paper-dim:#F3F1EC;
-    --hairline:#D8D5CC;
-    --ink-soft:#5B6472;
-  }
-  
-  *{box-sizing:border-box;}
-  html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--stormy);
-    font-family:'Source Sans 3', sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  a{color:inherit;text-decoration:none;}
-  img{max-width:100%;display:block;}
-
-  :focus-visible{
-    outline:2px solid var(--electric-teal);
-    outline-offset:3px;
-  }
-
-  .wrap{
-    max-width:1240px;
-    margin:0 auto;
-    padding:0 32px;
-  }
-
-  /* ============ TOP UTILITY NAV ============ */
-  .utility-nav{
-    border-bottom:1px solid var(--hairline);
-  }
-  .utility-nav .wrap{
-    display:flex;
-    justify-content:center;
-    gap:28px;
-    padding:12px 32px;
-    flex-wrap:wrap;
-  }
-  .utility-nav a{
-    font-family:'DM Sans', sans-serif;
-    font-size:12px;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    font-weight:500;
-    transition:color .18s ease;
-    position:relative;
-  }
-  .utility-nav a:hover{color:var(--electric-teal);}
-  .utility-nav a.active{color:var(--ultramarine);}
-
-  /* ============ MASTHEAD ============ */
-  .masthead{
-    text-align:center;
-    padding:38px 32px 28px;
-    border-bottom:1px solid var(--hairline);
-  }
-  .masthead .date-line{
-    font-family:'DM Sans', sans-serif;
-    font-size:11px;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    margin-bottom:18px;
-  }
-  .logo{
-    font-family:'League Spartan', sans-serif;
-    font-weight:800;
-    font-size:clamp(40px, 7vw, 76px);
-    letter-spacing:.02em;
-    text-transform:uppercase;
-    color:var(--stormy);
-    margin:0;
-    line-height:1;
-  }
-  .tagline{
-    font-family:'DM Sans', sans-serif;
-    font-size:13px;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--coastal-teal);
-    margin-top:12px;
-    font-weight:500;
-  }
-
-  /* ============ SECTION NAV ============ */
-  .section-nav{
-    border-bottom:1px solid var(--hairline);
-    background:var(--paper);
-  }
-  .section-nav .wrap{
-    display:flex;
-    justify-content:center;
-    gap:36px;
-    padding:14px 32px;
-    flex-wrap:wrap;
-  }
-  .section-nav a{
-    font-family:'DM Sans', sans-serif;
-    font-size:13px;
-    font-weight:600;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--stormy);
-    padding-bottom:4px;
-    border-bottom:2px solid transparent;
-    transition:color .18s ease, border-color .18s ease;
-  }
-  .section-nav a:hover{color:var(--electric-teal);border-color:var(--electric-teal);}
-  .section-nav a.active{color:var(--ultramarine);border-color:var(--ultramarine);}
-
-  .menu-toggle{display:none;}
-
-  /* ============ HERO ============ */
-  .hero{
-    padding:56px 32px 48px;
-    border-bottom:1px solid var(--hairline);
-  }
-  .hero .wrap{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:56px;
-    align-items:center;
-    padding:0;
-  }
+  /* ============ SHARED PAGE-HERO BITS ============ */
+  /* .eyebrow is the base style; .page-hero .eyebrow below only tweaks spacing. */
   .eyebrow{
     font-family:'DM Sans', sans-serif;
     font-size:12px;
@@ -141,68 +9,6 @@
     color:var(--ultramarine);
     display:inline-block;
     margin-bottom:18px;
-  }
-  .hero h1{
-    font-family:'Merriweather', serif;
-    font-weight:900;
-    font-size:clamp(34px, 4.2vw, 54px);
-    line-height:1.08;
-    margin:0 0 20px;
-    color:var(--stormy);
-  }
-  .hero h1 em{
-    font-style:italic;
-    color:var(--chesapeake);
-  }
-  .hero p{
-    font-family:'Source Sans 3', sans-serif;
-    font-size:18px;
-    line-height:1.6;
-    color:var(--ink-soft);
-    max-width:46ch;
-    margin:0 0 28px;
-  }
-  .btn{
-    display:inline-block;
-    font-family:'DM Sans', sans-serif;
-    font-size:13px;
-    font-weight:600;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--paper);
-    background:var(--stormy);
-    padding:13px 26px;
-    border:1px solid var(--stormy);
-    transition:background .18s ease, color .18s ease, transform .18s ease;
-  }
-  .btn:hover{
-    background:var(--electric-teal);
-    border-color:var(--electric-teal);
-    color:#08201d;
-    transform:translateY(-1px);
-  }
-  .hero-media{
-    position:relative;
-    aspect-ratio:4/5;
-    background:var(--stormy) url('https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
-    border:1px solid var(--hairline);
-  }
-  .hero-media figcaption{
-    position:absolute;
-    left:0;right:0;bottom:0;
-    background:linear-gradient(0deg, rgba(15,23,38,.82), rgba(15,23,38,0));
-    color:#fff;
-    padding:34px 18px 14px;
-    font-family:'DM Sans', sans-serif;
-    font-size:12px;
-    letter-spacing:.04em;
-  }
-  .hero-media figcaption strong{
-    display:block;
-    font-family:'Merriweather', serif;
-    font-size:15px;
-    font-weight:700;
-    margin-bottom:4px;
   }
 
   /* ============ SECTION LABEL ============ */
@@ -228,47 +34,11 @@
     background:var(--hairline);
   }
 
-  /* ============ EDITORIAL GRID ============ */
-  .editorial-grid{
-    padding:56px 32px;
-    border-bottom:1px solid var(--hairline);
-  }
+  /* ============ SHARED LAYOUT UTILITY ============ */
   .grid-layout{
     display:grid;
     grid-template-columns:1.6fr 1fr;
     gap:48px;
-  }
-  .main-story figure{
-    aspect-ratio:16/10;
-    background:#0f1e33 url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1400&auto=format&fit=crop') center/cover no-repeat;
-    border:1px solid var(--hairline);
-    margin:0 0 20px;
-  }
-  .main-story .tag{
-    font-family:'DM Sans', sans-serif;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--coastal-teal);
-    margin-bottom:10px;
-    display:block;
-  }
-  .main-story h2{
-    font-family:'Merriweather', serif;
-    font-weight:700;
-    font-size:clamp(26px, 3vw, 34px);
-    line-height:1.16;
-    margin:0 0 14px;
-    color:var(--stormy);
-  }
-  .main-story p{
-    font-family:'Source Sans 3', sans-serif;
-    font-size:16px;
-    line-height:1.65;
-    color:var(--ink-soft);
-    margin:0 0 12px;
-    max-width:56ch;
   }
   .read-more{
     font-family:'DM Sans', sans-serif;
@@ -281,105 +51,7 @@
   }
   .read-more:hover{color:var(--electric-teal);border-color:var(--electric-teal);}
 
-  .secondary-stories{
-    display:flex;
-    flex-direction:column;
-  }
-  .story-card{
-    padding:22px 0;
-    border-top:1px solid var(--hairline);
-  }
-  .secondary-stories .story-card:first-child{border-top:none;padding-top:0;}
-  .story-card .tag{
-    font-family:'DM Sans', sans-serif;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--aquatic-teal);
-    margin-bottom:8px;
-    display:block;
-  }
-  .story-card h3{
-    font-family:'Playfair Display', serif;
-    font-weight:600;
-    font-size:21px;
-    line-height:1.3;
-    margin:0 0 8px;
-    color:var(--stormy);
-  }
-  .story-card p{
-    font-family:'DM Sans', sans-serif;
-    font-size:14px;
-    line-height:1.55;
-    color:var(--ink-soft);
-    margin:0 0 10px;
-  }
-
-  /* ============ ABOUT TEASER ============ */
-  .about-teaser{
-    padding:56px 32px;
-    border-bottom:1px solid var(--hairline);
-  }
-  .about-teaser .grid-layout{
-    grid-template-columns:1fr 1fr;
-    gap:64px;
-    align-items:start;
-  }
-  .about-teaser h2{
-    font-family:'Playfair Display', serif;
-    font-weight:600;
-    font-size:clamp(26px, 3vw, 34px);
-    line-height:1.2;
-    margin:0 0 6px;
-    color:var(--stormy);
-  }
-  .about-teaser .kicker{
-    font-family:'DM Sans', sans-serif;
-    font-size:12px;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--chesapeake);
-    font-weight:600;
-  }
-  .about-teaser .pull{
-    font-family:'Merriweather', serif;
-    font-style:italic;
-    font-size:20px;
-    line-height:1.5;
-    color:var(--chesapeake);
-    border-left:3px solid var(--electric-teal);
-    padding-left:20px;
-    margin:18px 0 0;
-  }
-  .about-body p{
-    font-family:'Source Sans 3', sans-serif;
-    font-size:16px;
-    line-height:1.7;
-    color:var(--ink-soft);
-    margin:0 0 16px;
-  }
-
-  /* ============ MEMBERS PREVIEW ============ */
-  .members-preview{
-    padding:56px 32px;
-    border-bottom:1px solid var(--hairline);
-  }
-  .members-preview h2{
-    font-family:'Playfair Display', serif;
-    font-weight:600;
-    font-size:clamp(24px,3vw,30px);
-    margin:0;
-    color:var(--stormy);
-  }
-  .members-preview .lede{
-    font-family:'Source Sans 3', sans-serif;
-    font-size:15px;
-    color:var(--ink-soft);
-    max-width:52ch;
-    margin:10px 0 32px;
-    line-height:1.6;
-  }
+  /* ============ MEMBER CARD (directory grid) ============ */
   .member-grid{
     display:grid;
     grid-template-columns:repeat(4, 1fr);
@@ -415,25 +87,6 @@
     color:var(--stormy);
     margin:0 0 4px;
   }
-  .member-role{
-    font-family:'DM Sans', sans-serif;
-    font-size:12.5px;
-    color:var(--coastal-teal);
-    margin:0 0 10px;
-    font-weight:500;
-  }
-  .member-dept{
-    display:inline-block;
-    font-family:'DM Sans', sans-serif;
-    font-size:10.5px;
-    font-weight:600;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:var(--ultramarine);
-    background:rgba(30,79,160,.08);
-    padding:3px 8px;
-    margin-bottom:12px;
-  }
   .member-card .view-link{
     display:block;
     font-family:'DM Sans', sans-serif;
@@ -444,12 +97,7 @@
   }
   .member-card:hover .view-link{color:var(--electric-teal);}
 
-  .view-all{
-    text-align:center;
-    margin-top:36px;
-  }
-
-  /* ============ INNER PAGE HERO (Mission / Vision / Core Values) ============ */
+  /* ============ INNER PAGE HERO ============ */
   .page-hero{
     padding:56px 32px 44px;
     border-bottom:1px solid var(--hairline);
@@ -524,109 +172,13 @@
     margin:0 0 14px;
   }
 
+  /* ============ RESPONSIVE (page content) ============ */
   @media (max-width: 900px){
+    .grid-layout{grid-template-columns:1fr;gap:36px;}
+    .member-grid{grid-template-columns:repeat(2,1fr);}
     .members-impact .grid-layout{grid-template-columns:1fr;}
   }
 
-  /* ============ FOOTER ============ */
-  footer{
-    padding:48px 32px 28px;
-  }
-  .footer-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    flex-wrap:wrap;
-    gap:32px;
-    padding-bottom:28px;
-    border-bottom:1px solid var(--hairline);
-  }
-  .footer-logo{
-    font-family:'League Spartan', sans-serif;
-    font-weight:800;
-    font-size:24px;
-    letter-spacing:.02em;
-    text-transform:uppercase;
-  }
-  .footer-tagline{
-    font-family:'DM Sans', sans-serif;
-    font-size:12px;
-    color:var(--ink-soft);
-    margin-top:6px;
-    letter-spacing:.03em;
-  }
-  .footer-links{
-    display:flex;
-    gap:28px;
-    flex-wrap:wrap;
-  }
-  .footer-links a{
-    font-family:'DM Sans', sans-serif;
-    font-size:12.5px;
-    font-weight:600;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--stormy);
-    transition:color .18s ease;
-  }
-  .footer-links a:hover{color:var(--electric-teal);}
-  .footer-bottom{
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:10px;
-    padding-top:20px;
-    font-family:'DM Sans', sans-serif;
-    font-size:11.5px;
-    color:var(--ink-soft);
-    letter-spacing:.03em;
-  }
-
-  /* ============ RESPONSIVE ============ */
-  @media (max-width: 900px){
-    .hero .wrap{grid-template-columns:1fr;gap:32px;}
-    .grid-layout{grid-template-columns:1fr;gap:36px;}
-    .about-teaser .grid-layout{grid-template-columns:1fr;}
-    .member-grid{grid-template-columns:repeat(2,1fr);}
-    .section-nav .wrap{gap:20px;}
-  }
-
   @media (max-width: 640px){
-    .wrap{padding:0 18px;}
-    .utility-nav .wrap{gap:16px;padding:10px 18px;overflow-x:auto;justify-content:flex-start;}
-    .masthead{padding:26px 18px 20px;}
-    .section-nav{position:relative;}
-    .section-nav .wrap{
-      display:none;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:0;
-      padding:0;
-    }
-    .section-nav .wrap.open{display:flex;}
-    .section-nav .wrap a{
-      width:100%;
-      padding:14px 18px;
-      border-bottom:1px solid var(--hairline);
-      border-left:none;
-    }
-    .menu-toggle{
-      display:block;
-      width:100%;
-      text-align:center;
-      padding:12px 18px;
-      font-family:'DM Sans', sans-serif;
-      font-size:12px;
-      font-weight:700;
-      letter-spacing:.1em;
-      text-transform:uppercase;
-      background:none;
-      border:none;
-      color:var(--stormy);
-      cursor:pointer;
-    }
-    .hero{padding:36px 18px;}
-    .editorial-grid, .about-teaser, .members-preview{padding:40px 18px;}
     .member-grid{grid-template-columns:repeat(2,1fr);border-left:1px solid var(--hairline);}
-    footer{padding:36px 18px 22px;}
   }
