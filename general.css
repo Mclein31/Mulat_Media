@@ -60,8 +60,6 @@
   .utility-nav a.active{color:var(--ultramarine);}
 
   /* ============ MASTHEAD ============ */
-  /* Used on every page. Home page (index.css) overrides .logo for its
-     larger decorative treatment — see the "LOGO OVERRIDE" block there. */
   .masthead{
     text-align:center;
     padding:38px 32px 28px;
