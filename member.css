@@ -206,13 +206,13 @@
 
   /* ============ RESPONSIVE (page content) ============ */
   @media (max-width: 900px){
-    .profile-hero .wrap{grid-template-columns:1fr;gap:32px;}
+    .profile-hero .wrap{grid-template-columns:minmax(0, 1fr);gap:32px;}
     .profile-photo{max-width:280px;}
   }
 
   @media (max-width: 640px){
     .breadcrumb{padding:14px 18px;}
     .profile-hero, .bylines{padding:40px 18px;}
-    .profile-meta{grid-template-columns:1fr;}
+    .profile-meta{grid-template-columns:minmax(0, 1fr);}
     .profile-nav{padding:32px 18px 40px;}
   }

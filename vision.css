@@ -134,7 +134,7 @@
     padding:56px 32px 64px;
   }
   .vision-impact .grid-layout{
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
     gap:56px;
     align-items:center;
   }
@@ -169,7 +169,7 @@
 
   /* ============ RESPONSIVE (page content) ============ */
   @media (max-width: 900px){
-    .grid-layout{grid-template-columns:1fr;gap:36px;}
-    .pillar-grid{grid-template-columns:1fr;}
-    .vision-impact .grid-layout{grid-template-columns:1fr;}
+    .grid-layout{grid-template-columns:minmax(0, 1fr);gap:36px;}
+    .pillar-grid{grid-template-columns:minmax(0, 1fr);}
+    .vision-impact .grid-layout{grid-template-columns:minmax(0, 1fr);}
   }

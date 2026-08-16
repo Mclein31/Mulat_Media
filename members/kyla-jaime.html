@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  (function(){
+    try{
+      if(localStorage.getItem('mulat-theme') === 'dark'){
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }catch(e){}
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kyla Rexie Perez Jaime — MULAT MEDIA</title>
@@ -12,16 +21,26 @@
 <link rel="icon" type="image/png" href="../assets/logo/mulat-logo.png">
 </head>
 <body>
+<!-- THEME TOGGLE -->
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" data-icon-path="../assets/icons/">
+  <img id="themeToggleIcon" src="../assets/icons/dark-mode.png" alt="Switch to dark mode">
+</button>
+
 
 <!-- TOP UTILITY NAV -->
 <nav class="utility-nav" aria-label="Utility navigation">
   <div class="wrap">
+    <button id="navToggle" class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-icon-path="../assets/icons/">
+      <img id="navToggleIcon" src="../assets/icons/menu-light.png" alt="Menu">
+    </button>
+    <div class="nav-links" id="navLinks">
     <a href="../index.html">Home</a>
     <a href="../about.html">About</a>
     <a href="../mission.html">Mission</a>
     <a href="../vision.html">Vision</a>
     <a href="../core-values.html">Core Values</a>
     <a href="../members.html" class="active">Members</a>
+    </div>
   </div>
 </nav>
 
@@ -155,6 +174,92 @@
   }
   updateLiveDate();
   setInterval(updateLiveDate, 60000);
+</script>
+
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeToggleIcon');
+
+    function currentTheme(){
+      return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function updateThemeIcon(){
+      if (!btn || !icon) return;
+      var iconPath = btn.getAttribute('data-icon-path');
+      var t = currentTheme();
+      icon.src = iconPath + (t === 'dark' ? 'light-mode.png' : 'dark-mode.png');
+      icon.alt = t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    function updateNavIcon(){
+      if (!navIcon) return;
+      var navIconPath = navToggle.getAttribute('data-icon-path');
+      var t = currentTheme();
+      navIcon.src = navIconPath + (t === 'dark' ? 'menu-dark.png' : 'menu-light.png');
+    }
+
+    if (btn && icon){
+      updateThemeIcon();
+      btn.addEventListener('click', function(){
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        if(next === 'dark'){
+          root.setAttribute('data-theme','dark');
+        } else {
+          root.removeAttribute('data-theme');
+        }
+        try{ localStorage.setItem('mulat-theme', next); }catch(e){}
+        updateThemeIcon();
+        updateNavIcon();
+      });
+    }
+
+    /* Mobile burger nav */
+    var nav = document.querySelector('.utility-nav');
+    var navToggle = document.getElementById('navToggle');
+    var navIcon = document.getElementById('navToggleIcon');
+
+    function closeNav(){
+      if (!nav) return;
+      nav.classList.remove('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openNav(){
+      if (!nav) return;
+      nav.classList.add('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    if (nav && navToggle){
+      updateNavIcon();
+      navToggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (nav.classList.contains('nav-open')){
+          closeNav();
+        } else {
+          openNav();
+        }
+      });
+      document.addEventListener('click', function(e){
+        if (nav.classList.contains('nav-open') && !nav.contains(e.target)){
+          closeNav();
+        }
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeNav();
+      });
+      var navLinks = document.getElementById('navLinks');
+      if (navLinks){
+        navLinks.addEventListener('click', function(e){
+          if (e.target.tagName === 'A') closeNav();
+        });
+      }
+    }
+  })();
 </script>
 </body>
 </html>
