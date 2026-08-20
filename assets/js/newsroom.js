@@ -185,7 +185,15 @@
 
     await ensureMember();
     if (getMember()) {
-      window.location.href = redirectTarget;
+      // If they landed here via a real redirect (e.g. "log in to
+      // publish"), send them straight on. Otherwise — they just
+      // navigated to the login page while already signed in — show
+      // the account panel (change password / log out) instead.
+      if (redirectParam) {
+        window.location.href = redirectTarget;
+        return;
+      }
+      initAccountPanel(p);
       return;
     }
 
@@ -219,6 +227,64 @@
       setTimeout(function () {
         window.location.href = redirectTarget;
       }, 500);
+    });
+  }
+
+  /* ---------- account panel (change password / log out) ---------- */
+  function initAccountPanel(p) {
+    var loginForm = document.getElementById('loginForm');
+    var panel = document.getElementById('accountPanel');
+    if (!panel) return;
+    if (loginForm) loginForm.style.display = 'none';
+    panel.style.display = '';
+
+    var member = getMember();
+    var signedInAs = document.getElementById('accountSignedInAs');
+    if (signedInAs && member) {
+      signedInAs.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>.';
+    }
+
+    var logoutLink = document.getElementById('accountLogoutLink');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        signOutAndRedirect(p + 'articles.html');
+      });
+    }
+
+    var form = document.getElementById('changePasswordForm');
+    var newPasswordInput = document.getElementById('newPassword');
+    var confirmPasswordInput = document.getElementById('confirmPassword');
+    var msg = document.getElementById('accountMsg');
+    if (!form) return;
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var newPassword = newPasswordInput.value || '';
+      var confirmPassword = confirmPasswordInput.value || '';
+
+      if (newPassword.length < 6) {
+        showMsg(msg, 'Password must be at least 6 characters.', 'error');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        showMsg(msg, 'Passwords don\'t match.', 'error');
+        return;
+      }
+      if (!hasSupabase()) {
+        showMsg(msg, 'Not connected to the database.', 'error');
+        return;
+      }
+
+      showMsg(msg, 'Updating password…', 'success');
+      var result = await global.MulatSupabase.changeMemberPassword(newPassword);
+      if (!result.ok) {
+        showMsg(msg, result.error || 'Could not update your password.', 'error');
+        return;
+      }
+
+      form.reset();
+      showMsg(msg, 'Password updated.', 'success');
     });
   }
 

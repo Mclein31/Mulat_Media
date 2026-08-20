@@ -94,6 +94,26 @@
         </div>
         <button type="submit" class="btn auth-submit">Sign In</button>
       </form>
+
+      <div id="accountPanel" style="display:none;">
+        <p class="sub" id="accountSignedInAs"></p>
+
+        <div class="form-msg" id="accountMsg"></div>
+
+        <form id="changePasswordForm" novalidate>
+          <div class="form-field">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" placeholder="At least 6 characters" required minlength="6">
+          </div>
+          <div class="form-field">
+            <label for="confirmPassword">Confirm New Password</label>
+            <input type="password" id="confirmPassword" placeholder="Re-enter new password" required minlength="6">
+          </div>
+          <button type="submit" class="btn auth-submit">Change Password</button>
+        </form>
+
+        <p class="sub"><a href="#" id="accountLogoutLink" class="read-more">Log out</a></p>
+      </div>
     </div>
   </div>
 </section>

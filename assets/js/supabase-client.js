@@ -58,6 +58,20 @@
     });
   }
 
+  // Lets a signed-in member set a new password for themselves.
+  // Supabase trusts the active session here — it doesn't ask for the
+  // current password — so callers should re-verify it first (e.g. via
+  // signInMember) if they want that extra confirmation step.
+  // Returns { ok: true } or { ok: false, error }.
+  async function changeMemberPassword(newPassword) {
+    if (!newPassword || newPassword.length < 6) {
+      return { ok: false, error: 'Password must be at least 6 characters.' };
+    }
+    var result = await client.auth.updateUser({ password: newPassword });
+    if (result.error) return { ok: false, error: result.error.message };
+    return { ok: true };
+  }
+
   function rowToArticle(row) {
     return {
       id: row.id,
@@ -170,6 +184,7 @@
     signOutMember: signOutMember,
     getCurrentMember: getCurrentMember,
     onMemberChange: onMemberChange,
+    changeMemberPassword: changeMemberPassword,
     fetchArticlesForCategory: fetchArticlesForCategory,
     fetchArticleById: fetchArticleById,
     publishArticle: publishArticle,
