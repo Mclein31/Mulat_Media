@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function(){
+    try{
+      if(localStorage.getItem('mulat-theme') === 'dark'){
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }catch(e){}
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Article — MULAT MEDIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="general.css">
+<link rel="stylesheet" href="articles.css">
+<link rel="icon" type="image/png" href="assets/logo/mulat-logo.png">
+</head>
+<body data-prefix="">
+<!-- THEME TOGGLE -->
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" data-icon-path="assets/icons/">
+  <img id="themeToggleIcon" src="assets/icons/dark-mode.png" alt="Switch to dark mode">
+</button>
+
+
+<!-- TOP UTILITY NAV -->
+<nav class="utility-nav" aria-label="Utility navigation">
+  <div class="wrap">
+    <button id="navToggle" class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-icon-path="assets/icons/">
+      <img id="navToggleIcon" src="assets/icons/menu-light.png" alt="Menu">
+    </button>
+    <div class="nav-links" id="navLinks">
+    <a href="index.html">Home</a>
+    <a href="articles.html" class="active">Articles</a>
+    <a href="about.html">About</a>
+    <a href="mission.html">Mission</a>
+    <a href="vision.html">Vision</a>
+    <a href="core-values.html">Core Values</a>
+    <a href="members.html">Members</a>
+    <a href="acknowledgement.html">Acknowledgement</a>
+    <a href="special-features.html">Special Features</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="live-date" id="liveDate"></div>
+  <div class="date-line">Independent Digital Media Publication — Est. 2026</div>
+  <h1 class="logo">Mulat Media</h1>
+  <p class="tagline">Stories That Inform. Voices That Matter.</p>
+</header>
+
+<!-- SUBMIT BAR -->
+<div class="submit-bar">
+  <span class="who" id="submitWho"></span>
+  <a href="#" class="logout-link" id="submitLogout">Log out</a>
+</div>
+
+<!-- BREADCRUMB -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <div class="wrap">
+    <a href="articles.html">Articles</a>
+    <span class="sep">/</span>
+    <span class="current">Add Article</span>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <span class="eyebrow" id="submitEyebrow">Members Only</span>
+  <h1 id="submitPageTitle">Add an Article</h1>
+  <p class="statement" id="submitStatement">"Publish a new story directly to any section of MULAT MEDIA."</p>
+</section>
+
+<!-- SUBMIT FORM -->
+<section class="auth-section">
+  <div class="wrap">
+    <div class="auth-card">
+      <h2 id="submitCardTitle">Article Details</h2>
+      <p class="sub" id="submitCardSub">Published articles appear on the matching category page alongside our regular coverage, credited to your name, with their own "Continue Reading" page.</p>
+
+      <div class="form-msg" id="submitMsg"></div>
+
+      <form id="articleForm" novalidate>
+        <div class="form-field">
+          <label for="articleTitle">Headline</label>
+          <input type="text" id="articleTitle" placeholder="Write a clear, specific headline" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="categoryModalTrigger">Category</label>
+            <button type="button" class="category-picker-trigger placeholder" id="categoryModalTrigger" aria-haspopup="dialog" aria-expanded="false">
+              <span id="categoryModalTriggerText">Select a section…</span>
+              <span class="category-picker-caret" aria-hidden="true">&#9662;</span>
+            </button>
+            <input type="hidden" id="articleCategory">
+          </div>
+          <div class="form-field">
+            <label for="articleTag">Tag / Label</label>
+            <input type="text" id="articleTag" placeholder="e.g. Editorial, Review, Campus News" required>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="articleExcerpt">Summary</label>
+          <textarea id="articleExcerpt" placeholder="A short summary or lede for the article" required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="articleBody">Full Article <span style="text-transform:none;font-weight:400;">(optional)</span></label>
+          <textarea id="articleBody" placeholder="Write the full story here. Leave a blank line between paragraphs. If left empty, the summary above is used as the article page." style="min-height:200px;"></textarea>
+          <div class="hint">This is what readers see on the article's own page after they click "Continue Reading."</div>
+        </div>
+
+        <div class="form-field">
+          <label for="articleImageFile">Article Photo <span style="text-transform:none;font-weight:400;">(optional)</span></label>
+          <div class="image-dropzone" id="imageDropzone" tabindex="0" role="button" aria-label="Drag and drop a photo here, or click to browse your files">
+            <input type="file" id="articleImageFile" accept="image/*" hidden>
+            <div class="dropzone-empty" id="dropzoneEmpty">
+              <span class="dropzone-icon">&#128247;</span>
+              <p class="dropzone-text"><strong>Drag &amp; drop a photo here</strong>, or click to browse</p>
+              <p class="dropzone-hint">JPG, PNG, GIF, or WEBP &middot; up to 5MB</p>
+            </div>
+            <div class="dropzone-preview" id="dropzonePreview" hidden>
+              <img id="dropzonePreviewImg" alt="Selected photo preview">
+              <button type="button" class="dropzone-remove" id="dropzoneRemove" aria-label="Remove photo">&times; Remove photo</button>
+            </div>
+          </div>
+          <div class="hint" id="dropzoneError" style="display:none;color:#8a1f1f;"></div>
+          <div class="dropzone-or"><span>or paste an image URL instead</span></div>
+          <input type="url" id="articleImage" placeholder="https://...">
+        </div>
+
+        <div class="form-field">
+          <label for="articleReadTime">Read Time (minutes)</label>
+          <input type="number" id="articleReadTime" min="1" max="30" value="4">
+        </div>
+
+        <button type="submit" class="btn auth-submit" id="submitBtnText">Publish Article</button>
+        <button type="button" class="btn auth-submit auth-cancel" id="submitCancelBtn" hidden>Cancel Edit</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORY PICKER MODAL -->
+<div class="category-modal-overlay" id="categoryModalOverlay" hidden>
+  <div class="category-modal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+    <div class="category-modal-head">
+      <h3 id="categoryModalTitle">Choose a Category</h3>
+      <button type="button" class="category-modal-close" id="categoryModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="category-modal-list" id="categoryModalList"></div>
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">Mulat Media</div>
+        <div class="footer-tagline">Independent Digital Media Publication</div>
+      </div>
+      <div class="footer-links">
+        <a href="articles.html">Articles</a>
+        <a href="about.html">About</a>
+        <a href="mission.html">Mission</a>
+        <a href="vision.html">Vision</a>
+        <a href="core-values.html">Core Values</a>
+        <a href="members.html">Members</a>
+        <a href="acknowledgement.html">Acknowledgement</a>
+        <a href="special-features.html">Special Features</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MULAT MEDIA. All Rights Reserved.</span>
+      <span>mulatmedia3@gmail.com</span>
+    </div>
+    <div class="footer-credit">
+      <a href="https://onzamj.vercel.app" target="_blank" rel="noopener noreferrer">&lt;/&gt; McLein Jei G. Onza</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function updateLiveDate(){
+    const el = document.getElementById('liveDate');
+    if (!el) return;
+    const now = new Date();
+    const formatted = now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    el.textContent = formatted;
+  }
+  updateLiveDate();
+  setInterval(updateLiveDate, 60000);
+</script>
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeToggleIcon');
+
+    function currentTheme(){
+      return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function updateThemeIcon(){
+      if (!btn || !icon) return;
+      var iconPath = btn.getAttribute('data-icon-path');
+      var t = currentTheme();
+      icon.src = iconPath + (t === 'dark' ? 'light-mode.png' : 'dark-mode.png');
+      icon.alt = t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    function updateNavIcon(){
+      if (!navIcon) return;
+      var navIconPath = navToggle.getAttribute('data-icon-path');
+      var t = currentTheme();
+      navIcon.src = navIconPath + (t === 'dark' ? 'menu-dark.png' : 'menu-light.png');
+    }
+
+    if (btn && icon){
+      updateThemeIcon();
+      btn.addEventListener('click', function(){
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        if(next === 'dark'){
+          root.setAttribute('data-theme','dark');
+        } else {
+          root.removeAttribute('data-theme');
+        }
+        try{ localStorage.setItem('mulat-theme', next); }catch(e){}
+        updateThemeIcon();
+        updateNavIcon();
+      });
+    }
+
+    /* Mobile burger nav */
+    var nav = document.querySelector('.utility-nav');
+    var navToggle = document.getElementById('navToggle');
+    var navIcon = document.getElementById('navToggleIcon');
+
+    function closeNav(){
+      if (!nav) return;
+      nav.classList.remove('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openNav(){
+      if (!nav) return;
+      nav.classList.add('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    if (nav && navToggle){
+      updateNavIcon();
+      navToggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (nav.classList.contains('nav-open')){
+          closeNav();
+        } else {
+          openNav();
+        }
+      });
+      document.addEventListener('click', function(e){
+        if (nav.classList.contains('nav-open') && !nav.contains(e.target)){
+          closeNav();
+        }
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeNav();
+      });
+      var navLinks = document.getElementById('navLinks');
+      if (navLinks){
+        navLinks.addEventListener('click', function(e){
+          if (e.target.tagName === 'A') closeNav();
+        });
+      }
+    }
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/newsroom.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    MulatNewsroom.initSubmitForm();
+  });
+</script>
+</body>
+</html>

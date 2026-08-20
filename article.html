@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function(){
+    try{
+      if(localStorage.getItem('mulat-theme') === 'dark'){
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }catch(e){}
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="articleTitleTag">Article — MULAT MEDIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="general.css">
+<link rel="stylesheet" href="articles.css">
+<link rel="icon" type="image/png" href="assets/logo/mulat-logo.png">
+</head>
+<body data-prefix="">
+<!-- THEME TOGGLE -->
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" data-icon-path="assets/icons/">
+  <img id="themeToggleIcon" src="assets/icons/dark-mode.png" alt="Switch to dark mode">
+</button>
+
+
+<!-- TOP UTILITY NAV -->
+<nav class="utility-nav" aria-label="Utility navigation">
+  <div class="wrap">
+    <button id="navToggle" class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-icon-path="assets/icons/">
+      <img id="navToggleIcon" src="assets/icons/menu-light.png" alt="Menu">
+    </button>
+    <div class="nav-links" id="navLinks">
+    <a href="index.html">Home</a>
+    <a href="articles.html" class="active">Articles</a>
+    <a href="about.html">About</a>
+    <a href="mission.html">Mission</a>
+    <a href="vision.html">Vision</a>
+    <a href="core-values.html">Core Values</a>
+    <a href="members.html">Members</a>
+    <a href="acknowledgement.html">Acknowledgement</a>
+    <a href="special-features.html">Special Features</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="live-date" id="liveDate"></div>
+  <div class="date-line">Independent Digital Media Publication — Est. 2026</div>
+  <h1 class="logo">Mulat Media</h1>
+  <p class="tagline">Stories That Inform. Voices That Matter.</p>
+</header>
+
+<!-- BREADCRUMB -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <div class="wrap" id="articleBreadcrumb">
+    <a href="articles.html">Articles</a>
+  </div>
+</nav>
+
+<!-- CATEGORY TABS -->
+<nav class="category-tabs" aria-label="Article categories">
+  <div class="wrap">
+    <div class="tabs-scroll-outer">
+      <button type="button" class="tabs-scroll-arrow prev" aria-label="Scroll categories left">&#8249;</button>
+      <div class="tabs-scroll-wrap">
+        <div class="tabs-scroll" id="articleCategoryTabs">
+    <a href="articles/opinion.html">Opinion</a>
+    <a href="articles/news-current-affairs.html">News and Current Affairs</a>
+    <a href="articles/entertainment.html">Entertainment</a>
+    <a href="articles/metrostyle.html">Metrostyle</a>
+    <a href="articles/sports.html">Sports</a>
+    <a href="articles/campus-press.html">Campus Press</a>
+        </div>
+      </div>
+      <button type="button" class="tabs-scroll-arrow next" aria-label="Scroll categories right">&#8250;</button>
+    </div>
+    <div class="tabs-cta" id="authCta"></div>
+  </div>
+</nav>
+
+<!-- ARTICLE -->
+<article id="articleContent">
+  <section class="article-header">
+    <div class="wrap">
+      <span class="tag" id="articleTag">&nbsp;</span>
+      <h1 id="articleTitle">Loading article…</h1>
+      <div class="article-byline" id="articleByline">&nbsp;</div>
+    </div>
+  </section>
+
+  <section class="article-body-section">
+    <div class="wrap">
+      <div class="article-body" id="articleBody">
+        <figure class="article-inline-image" id="articleHero" hidden>
+          <img id="articleHeroImg" src="" alt="">
+        </figure>
+        <div id="articleBodyText"></div>
+      </div>
+      <div class="card-owner-actions" id="articleOwnerActions" data-owner-actions hidden>
+        <a href="#" class="card-edit-link" id="articleEditLink">Edit this article</a>
+        <button type="button" class="card-delete-btn" id="articleDeleteBtn">Delete this article</button>
+      </div>
+    </div>
+  </section>
+</article>
+
+<!-- NOT FOUND STATE -->
+<section class="article-not-found" id="articleNotFound" hidden>
+  <div class="wrap">
+    <span class="eyebrow">Article Unavailable</span>
+    <h1>We couldn't find that story</h1>
+    <p class="statement">It may have been removed, or the link might be off. Head back to Articles to keep browsing.</p>
+    <a href="articles.html" class="btn">Back to Articles</a>
+  </div>
+</section>
+
+<!-- MORE FROM CATEGORY -->
+<section class="article-list" id="articleMoreSection" hidden>
+  <div class="wrap">
+    <div class="section-label"><span id="articleMoreLabel">More From This Section</span></div>
+    <div class="article-row-grid" id="articleMoreGrid"></div>
+  </div>
+</section>
+
+<!-- CROSSLINK NAV -->
+<section class="articles-crosslink" id="articleCrosslink" hidden>
+  <div class="wrap">
+    <a href="articles.html" class="read-more">&larr; All Categories</a>
+    <a href="#" class="btn" id="articleBackToCategory">Back to Section</a>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">Mulat Media</div>
+        <div class="footer-tagline">Independent Digital Media Publication</div>
+      </div>
+      <div class="footer-links">
+        <a href="articles.html">Articles</a>
+        <a href="about.html">About</a>
+        <a href="mission.html">Mission</a>
+        <a href="vision.html">Vision</a>
+        <a href="core-values.html">Core Values</a>
+        <a href="members.html">Members</a>
+        <a href="acknowledgement.html">Acknowledgement</a>
+        <a href="special-features.html">Special Features</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MULAT MEDIA. All Rights Reserved.</span>
+      <span>mulatmedia3@gmail.com</span>
+    </div>
+    <div class="footer-credit">
+      <a href="https://onzamj.vercel.app" target="_blank" rel="noopener noreferrer">&lt;/&gt; McLein Jei G. Onza</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function updateLiveDate(){
+    const el = document.getElementById('liveDate');
+    if (!el) return;
+    const now = new Date();
+    const formatted = now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    el.textContent = formatted;
+  }
+  updateLiveDate();
+  setInterval(updateLiveDate, 60000);
+</script>
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeToggleIcon');
+
+    function currentTheme(){
+      return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function updateThemeIcon(){
+      if (!btn || !icon) return;
+      var iconPath = btn.getAttribute('data-icon-path');
+      var t = currentTheme();
+      icon.src = iconPath + (t === 'dark' ? 'light-mode.png' : 'dark-mode.png');
+      icon.alt = t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    function updateNavIcon(){
+      if (!navIcon) return;
+      var navIconPath = navToggle.getAttribute('data-icon-path');
+      var t = currentTheme();
+      navIcon.src = navIconPath + (t === 'dark' ? 'menu-dark.png' : 'menu-light.png');
+    }
+
+    if (btn && icon){
+      updateThemeIcon();
+      btn.addEventListener('click', function(){
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        if(next === 'dark'){
+          root.setAttribute('data-theme','dark');
+        } else {
+          root.removeAttribute('data-theme');
+        }
+        try{ localStorage.setItem('mulat-theme', next); }catch(e){}
+        updateThemeIcon();
+        updateNavIcon();
+      });
+    }
+
+    /* Mobile burger nav */
+    var nav = document.querySelector('.utility-nav');
+    var navToggle = document.getElementById('navToggle');
+    var navIcon = document.getElementById('navToggleIcon');
+
+    function closeNav(){
+      if (!nav) return;
+      nav.classList.remove('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openNav(){
+      if (!nav) return;
+      nav.classList.add('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    if (nav && navToggle){
+      updateNavIcon();
+      navToggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (nav.classList.contains('nav-open')){
+          closeNav();
+        } else {
+          openNav();
+        }
+      });
+      document.addEventListener('click', function(e){
+        if (nav.classList.contains('nav-open') && !nav.contains(e.target)){
+          closeNav();
+        }
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeNav();
+      });
+      var navLinks = document.getElementById('navLinks');
+      if (navLinks){
+        navLinks.addEventListener('click', function(e){
+          if (e.target.tagName === 'A') closeNav();
+        });
+      }
+    }
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/newsroom.js"></script>
+<script src="assets/js/article-page.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    MulatNewsroom.renderAuthCta('authCta');
+    MulatArticlePage.render();
+  });
+</script>
+</body>
+</html>

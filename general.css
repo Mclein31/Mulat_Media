@@ -39,6 +39,15 @@
 
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
+
+  /* Site-wide safety net: an element's own class can set `display`
+     for its normal state (e.g. .btn{display:inline-block}), and an
+     author-stylesheet rule like that always wins over the browser's
+     built-in [hidden]{display:none}, no matter the specificity. This
+     one rule keeps the hidden attribute working everywhere on the
+     site regardless of what else a given element's class sets. */
+  [hidden]{display:none !important;}
+
   body{
     margin:0;
     background:var(--paper);
@@ -210,9 +219,8 @@
   }
   .footer-credit a:hover{color:var(--electric-teal);}
 
-  /* ============ RESPONSIVE (header + footer only) ============ */
-  @media (max-width: 640px){
-    .wrap{padding:0 18px;}
+  /* ============ RESPONSIVE — utility nav switches to a burger menu ============ */
+  @media (max-width: 900px){
     .utility-nav{position:relative;}
     .utility-nav .wrap{
       display:flex;
@@ -245,6 +253,11 @@
       width:100%;
     }
     .nav-links a:last-child{border-bottom:none;}
+  }
+
+  /* ============ RESPONSIVE (masthead + footer only) ============ */
+  @media (max-width: 640px){
+    .wrap{padding:0 18px;}
     .masthead{padding:26px 18px 20px;}
     footer{padding:36px 18px 34px;}
     .footer-top{

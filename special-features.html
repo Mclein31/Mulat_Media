@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  (function(){
+    try{
+      if(localStorage.getItem('mulat-theme') === 'dark'){
+        document.documentElement.setAttribute('data-theme','dark');
+      }
+    }catch(e){}
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Special Features — MULAT MEDIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="general.css">
+<link rel="stylesheet" href="articles.css">
+<link rel="icon" type="image/png" href="assets/logo/mulat-logo.png">
+</head>
+<body data-prefix="">
+<!-- THEME TOGGLE -->
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" data-icon-path="assets/icons/">
+  <img id="themeToggleIcon" src="assets/icons/dark-mode.png" alt="Switch to dark mode">
+</button>
+
+
+<!-- TOP UTILITY NAV -->
+<nav class="utility-nav" aria-label="Utility navigation">
+  <div class="wrap">
+    <button id="navToggle" class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" data-icon-path="assets/icons/">
+      <img id="navToggleIcon" src="assets/icons/menu-light.png" alt="Menu">
+    </button>
+    <div class="nav-links" id="navLinks">
+    <a href="index.html">Home</a>
+    <a href="articles.html">Articles</a>
+    <a href="about.html">About</a>
+    <a href="mission.html">Mission</a>
+    <a href="vision.html">Vision</a>
+    <a href="core-values.html">Core Values</a>
+    <a href="members.html">Members</a>
+    <a href="acknowledgement.html">Acknowledgement</a>
+    <a href="special-features.html" class="active">Special Features</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="live-date" id="liveDate"></div>
+  <div class="date-line">Independent Digital Media Publication — Est. 2026</div>
+  <h1 class="logo">Mulat Media</h1>
+  <p class="tagline">Stories That Inform. Voices That Matter.</p>
+</header>
+
+<!-- BREADCRUMB -->
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <div class="wrap">
+    <a href="index.html">Home</a>
+    <span class="sep">/</span>
+    <span class="current">Special Features</span>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <span class="eyebrow">Newsroom Essays</span>
+  <h1>Special Features</h1>
+  <p class="statement">"Short essays and feature-style pieces from every member of the MULAT MEDIA newsroom."</p>
+</section>
+
+<!-- INTRO -->
+<section class="articles-intro">
+  <div class="wrap">
+    <p>Special Features is home to simple, essay-style pieces from the newsroom — reflections, features, and short-form writing outside our regular news sections. Any signed-in member can publish, edit, or delete a piece here.</p>
+  </div>
+</section>
+
+<!-- AUTH BAR -->
+<nav class="category-tabs" aria-label="Special Features actions">
+  <div class="wrap">
+    <div class="tabs-scroll"></div>
+    <div class="tabs-cta" id="authCta"></div>
+  </div>
+</nav>
+
+<!-- FEATURED ESSAYS -->
+<section class="article-feature">
+  <div class="wrap">
+    <div class="section-label"><span>Latest Essays</span></div>
+    <div class="grid-layout" id="categoryFeature"></div>
+    <p class="empty-note" id="categoryEmptyNote" hidden>No essays posted yet. Newsroom members can log in and be the first to publish one.</p>
+  </div>
+</section>
+
+<!-- MORE ESSAYS -->
+<section class="article-list" id="categoryMoreSection">
+  <div class="wrap">
+    <div class="section-label"><span>More Essays</span></div>
+    <div class="article-row-grid" id="moreFromCategoryGrid"></div>
+  </div>
+</section>
+
+<!-- CROSSLINK NAV -->
+<section class="articles-crosslink">
+  <div class="wrap">
+    <a href="acknowledgement.html" class="read-more">← Acknowledgement</a>
+    <a href="articles.html" class="btn">Browse Articles</a>
+    <a href="members.html" class="read-more">Meet the Newsroom →</a>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-logo">Mulat Media</div>
+        <div class="footer-tagline">Independent Digital Media Publication</div>
+      </div>
+      <div class="footer-links">
+        <a href="articles.html">Articles</a>
+        <a href="about.html">About</a>
+        <a href="mission.html">Mission</a>
+        <a href="vision.html">Vision</a>
+        <a href="core-values.html">Core Values</a>
+        <a href="members.html">Members</a>
+        <a href="acknowledgement.html">Acknowledgement</a>
+        <a href="special-features.html">Special Features</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 MULAT MEDIA. All Rights Reserved.</span>
+      <span>mulatmedia3@gmail.com</span>
+    </div>
+    <div class="footer-credit">
+      <a href="https://onzamj.vercel.app" target="_blank" rel="noopener noreferrer">&lt;/&gt; McLein Jei G. Onza</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  function updateLiveDate(){
+    const el = document.getElementById('liveDate');
+    if (!el) return;
+    const now = new Date();
+    const formatted = now.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    el.textContent = formatted;
+  }
+  updateLiveDate();
+  setInterval(updateLiveDate, 60000);
+</script>
+
+<script>
+  (function(){
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    var icon = document.getElementById('themeToggleIcon');
+
+    function currentTheme(){
+      return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function updateThemeIcon(){
+      if (!btn || !icon) return;
+      var iconPath = btn.getAttribute('data-icon-path');
+      var t = currentTheme();
+      icon.src = iconPath + (t === 'dark' ? 'light-mode.png' : 'dark-mode.png');
+      icon.alt = t === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+
+    function updateNavIcon(){
+      if (!navIcon) return;
+      var navIconPath = navToggle.getAttribute('data-icon-path');
+      var t = currentTheme();
+      navIcon.src = navIconPath + (t === 'dark' ? 'menu-dark.png' : 'menu-light.png');
+    }
+
+    if (btn && icon){
+      updateThemeIcon();
+      btn.addEventListener('click', function(){
+        var next = currentTheme() === 'dark' ? 'light' : 'dark';
+        if(next === 'dark'){
+          root.setAttribute('data-theme','dark');
+        } else {
+          root.removeAttribute('data-theme');
+        }
+        try{ localStorage.setItem('mulat-theme', next); }catch(e){}
+        updateThemeIcon();
+        updateNavIcon();
+      });
+    }
+
+    /* Mobile burger nav */
+    var nav = document.querySelector('.utility-nav');
+    var navToggle = document.getElementById('navToggle');
+    var navIcon = document.getElementById('navToggleIcon');
+
+    function closeNav(){
+      if (!nav) return;
+      nav.classList.remove('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function openNav(){
+      if (!nav) return;
+      nav.classList.add('nav-open');
+      if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    if (nav && navToggle){
+      updateNavIcon();
+      navToggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (nav.classList.contains('nav-open')){
+          closeNav();
+        } else {
+          openNav();
+        }
+      });
+      document.addEventListener('click', function(e){
+        if (nav.classList.contains('nav-open') && !nav.contains(e.target)){
+          closeNav();
+        }
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeNav();
+      });
+      var navLinks = document.getElementById('navLinks');
+      if (navLinks){
+        navLinks.addEventListener('click', function(e){
+          if (e.target.tagName === 'A') closeNav();
+        });
+      }
+    }
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/js/supabase-client.js"></script>
+<script src="assets/js/newsroom.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    MulatNewsroom.renderAuthCta('authCta', {
+      addPage: 'submit-special-feature.html',
+      addLabel: '+ Add Essay'
+    });
+    MulatNewsroom.renderCategoryFeed('special-features');
+  });
+</script>
+</body>
+</html>
