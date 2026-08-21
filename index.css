@@ -56,7 +56,7 @@
   .btn:hover{
     background:var(--electric-teal);
     border-color:var(--electric-teal);
-    color:#08201d;
+    color:#081d2e;
     transform:translateY(-1px);
   }
   .hero-media{

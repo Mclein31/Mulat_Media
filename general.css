@@ -2,9 +2,9 @@
     --stormy:#1B2A44;
     --chesapeake:#2C4A6E;
     --ultramarine:#1E4FA0;
-    --coastal-teal:#1F7A78;
-    --aquatic-teal:#3AA6A0;
-    --electric-teal:#00B3A4;
+    --coastal-teal:#1F6FA8;
+    --aquatic-teal:#3A86C7;
+    --electric-teal:#0091D6;
     --paper:#ECF0F1;
     --paper-dim:#F3F1EC;
     --hairline:#BDC3C7;
@@ -26,8 +26,8 @@
     --ink-soft2:#8891a0;
     --chesapeake:#9DBCE0;
     --ultramarine:#6FA0FF;
-    --coastal-teal:#4FCFC8;
-    --aquatic-teal:#5CD3CC;
+    --coastal-teal:#6FB8E8;
+    --aquatic-teal:#7FC4EE;
     --dark-slate:#F2F4F8;
     --blue-slate:#C3CCD9;
     --muted-gray:#AEB6C2;
@@ -40,12 +40,6 @@
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
 
-  /* Site-wide safety net: an element's own class can set `display`
-     for its normal state (e.g. .btn{display:inline-block}), and an
-     author-stylesheet rule like that always wins over the browser's
-     built-in [hidden]{display:none}, no matter the specificity. This
-     one rule keeps the hidden attribute working everywhere on the
-     site regardless of what else a given element's class sets. */
   [hidden]{display:none !important;}
 
   body{
