@@ -130,34 +130,74 @@
 
   async function getArticlesForCategory(slug) {
     if (!hasSupabase()) return [];
-    return await global.MulatSupabase.fetchArticlesForCategory(slug);
+    try {
+      return await global.MulatSupabase.fetchArticlesForCategory(slug);
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
   }
 
   async function getArticleById(id) {
     if (!hasSupabase()) return null;
-    return await global.MulatSupabase.fetchArticleById(id);
+    try {
+      return await global.MulatSupabase.fetchArticleById(id);
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
 
   async function addArticle(fields) {
     if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
-    if (!cachedMember) return { ok: false, error: 'You need to be signed in to publish.' };
-    return await global.MulatSupabase.publishArticle(fields, cachedMember);
+    await ensureMember();
+    var member = getMember();
+    if (!member) return { ok: false, error: 'You need to be signed in to publish.' };
+    try {
+      return await global.MulatSupabase.publishArticle(fields, member);
+    } catch (e) {
+      console.error(e);
+      return { ok: false, error: e.message || 'An error occurred while publishing.' };
+    }
   }
 
   async function updateArticle(id, fields) {
     if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
-    return await global.MulatSupabase.updateArticleRemote(id, fields);
+    await ensureMember();
+    var member = getMember();
+    if (!member) return { ok: false, error: 'You need to be signed in to save changes.' };
+    try {
+      return await global.MulatSupabase.updateArticleRemote(id, fields);
+    } catch (e) {
+      console.error(e);
+      return { ok: false, error: e.message || 'An error occurred while updating.' };
+    }
   }
 
   async function deleteArticle(id) {
     if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
-    return await global.MulatSupabase.deleteArticleRemote(id);
+    await ensureMember();
+    var member = getMember();
+    if (!member) return { ok: false, error: 'You need to be signed in to delete.' };
+    try {
+      return await global.MulatSupabase.deleteArticleRemote(id);
+    } catch (e) {
+      console.error(e);
+      return { ok: false, error: e.message || 'An error occurred while deleting.' };
+    }
   }
 
   async function approveArticle(id) {
     if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
+    await ensureMember();
+    var member = getMember();
     if (!isJangMee()) return { ok: false, error: 'Only Jang Mee (Editor-in-Chief) can approve articles.' };
-    return await global.MulatSupabase.approveArticleRemote(id, cachedMember);
+    try {
+      return await global.MulatSupabase.approveArticleRemote(id, member);
+    } catch (e) {
+      console.error(e);
+      return { ok: false, error: e.message || 'An error occurred while approving.' };
+    }
   }
 
   async function renderAuthCta(containerId, options) {
@@ -483,7 +523,7 @@
       return;
     }
 
-    var submitBtnText = document.getElementById('submitBtnText');
+    var submitBtn = form.querySelector('button[type="submit"]');
     var cardSub = document.getElementById('submitCardSub');
 
     if (editingArticle) {
@@ -503,7 +543,7 @@
           cardSub.textContent = 'Changes replace the current version of this post for every reader.';
         }
       }
-      if (submitBtnText) submitBtnText.textContent = 'Save Changes';
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
       if (cancelBtn) {
         cancelBtn.hidden = false;
         cancelBtn.addEventListener('click', function () {
@@ -530,8 +570,8 @@
       document.getElementById('articleReadTime').value = rtMatch ? rtMatch[1] : '4';
     } else {
       // New article creation
-      if (submitBtnText) {
-        submitBtnText.textContent = eic 
+      if (submitBtn) {
+        submitBtn.textContent = eic 
           ? (config.fixedCategoryName ? 'Publish ' + config.fixedCategoryName.replace(/s$/, '') : 'Publish Article')
           : 'Submit for Peer Review';
       }
@@ -643,52 +683,88 @@
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-
-      var title = document.getElementById('articleTitle').value.trim();
-      var category = config.fixedCategory || (categoryField ? categoryField.value : '');
-      var tag = document.getElementById('articleTag').value.trim();
-      var readTime = document.getElementById('articleReadTime').value || '4';
-      var excerpt = document.getElementById('articleExcerpt').value.trim();
-      var bodyEl = document.getElementById('articleBody');
-      var bodyRaw = bodyEl ? bodyEl.value.trim() : '';
-
-      if (!title || !category || !tag || !excerpt) {
-        showMsg(msg, 'Please fill in title, category, tag, and summary.', 'error');
-        return;
-      }
-
+      var defaultButtonText = editingArticle ? 'Save Changes' : (eic ? 'Publish Article' : 'Submit for Peer Review');
       var submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) submitBtn.disabled = true;
 
-      var imageUrl = document.getElementById('articleImage').value.trim();
-      if (pendingImageFile) {
-        showMsg(msg, 'Uploading photo…', 'success');
-        if (!hasSupabase()) {
-          showMsg(msg, 'Not connected to the database.', 'error');
-          if (submitBtn) submitBtn.disabled = false;
+      try {
+        var title = document.getElementById('articleTitle').value.trim();
+        var category = config.fixedCategory || (categoryField ? categoryField.value : '');
+        var tag = document.getElementById('articleTag').value.trim();
+        var readTime = document.getElementById('articleReadTime').value || '4';
+        var excerpt = document.getElementById('articleExcerpt').value.trim();
+        var bodyEl = document.getElementById('articleBody');
+        var bodyRaw = bodyEl ? bodyEl.value.trim() : '';
+
+        if (!title || !category || !tag || !excerpt) {
+          showMsg(msg, 'Please fill in headline, category, tag, and summary.', 'error');
           return;
         }
-        var uploadResult = await global.MulatSupabase.uploadArticlePhoto(pendingImageFile);
-        if (!uploadResult.ok) {
-          showMsg(msg, uploadResult.error || 'Photo upload failed. Please try again.', 'error');
-          if (submitBtn) submitBtn.disabled = false;
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Submitting…';
+        }
+
+        var imageUrl = document.getElementById('articleImage').value.trim();
+        if (pendingImageFile) {
+          showMsg(msg, 'Uploading photo…', 'success');
+          if (!hasSupabase()) {
+            showMsg(msg, 'Not connected to the database.', 'error');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = defaultButtonText;
+            }
+            return;
+          }
+          var uploadResult = await global.MulatSupabase.uploadArticlePhoto(pendingImageFile);
+          if (!uploadResult.ok) {
+            showMsg(msg, uploadResult.error || 'Photo upload failed. Please try again.', 'error');
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = defaultButtonText;
+            }
+            return;
+          }
+          imageUrl = uploadResult.url;
+        } else if (!imageUrl && editingArticle) {
+          imageUrl = editingArticle.image || '';
+        }
+
+        var catName = config.fixedCategory
+          ? (config.fixedCategoryName || category)
+          : (CATEGORIES.filter(function (c) { return c.slug === category; })[0] || {}).name || category;
+
+        var bodyParas = bodyRaw
+          ? bodyRaw.split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean)
+          : [excerpt];
+
+        if (editingArticle) {
+          var updated = await updateArticle(editingArticle.id, {
+            category: category,
+            categoryName: catName,
+            tag: tag,
+            title: title,
+            excerpt: excerpt,
+            body: bodyParas,
+            image: imageUrl,
+            readTime: readTime + ' min read'
+          });
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = defaultButtonText;
+          }
+          if (!updated.ok) {
+            showMsg(msg, updated.error || 'You do not have permission to save changes to this post.', 'error');
+            return;
+          }
+          showMsg(msg, 'Changes saved. Redirecting…', 'success');
+          setTimeout(function () {
+            window.location.href = p + 'article.html?id=' + encodeURIComponent(editingArticle.id);
+          }, 600);
           return;
         }
-        imageUrl = uploadResult.url;
-      } else if (!imageUrl && editingArticle) {
-        imageUrl = editingArticle.image || '';
-      }
 
-      var catName = config.fixedCategory
-        ? (config.fixedCategoryName || category)
-        : (CATEGORIES.filter(function (c) { return c.slug === category; })[0] || {}).name || category;
-
-      var bodyParas = bodyRaw
-        ? bodyRaw.split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean)
-        : [excerpt];
-
-      if (editingArticle) {
-        var updated = await updateArticle(editingArticle.id, {
+        var published = await addArticle({
           category: category,
           categoryName: catName,
           tag: tag,
@@ -698,48 +774,37 @@
           image: imageUrl,
           readTime: readTime + ' min read'
         });
-        if (submitBtn) submitBtn.disabled = false;
-        if (!updated.ok) {
-          showMsg(msg, updated.error || 'You do not have permission to save changes to this post.', 'error');
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = defaultButtonText;
+        }
+        if (!published.ok) {
+          showMsg(msg, published.error || 'Could not submit article. Please check your database permissions.', 'error');
           return;
         }
-        showMsg(msg, 'Changes saved. Redirecting…', 'success');
-        setTimeout(function () {
-          window.location.href = p + 'article.html?id=' + encodeURIComponent(editingArticle.id);
-        }, 600);
-        return;
-      }
 
-      var published = await addArticle({
-        category: category,
-        categoryName: catName,
-        tag: tag,
-        title: title,
-        excerpt: excerpt,
-        body: bodyParas,
-        image: imageUrl,
-        readTime: readTime + ' min read'
-      });
+        form.reset();
+        clearPreview();
 
-      if (submitBtn) submitBtn.disabled = false;
-      if (!published.ok) {
-        showMsg(msg, published.error || 'You do not have permission to publish to that section.', 'error');
-        return;
-      }
-
-      form.reset();
-      clearPreview();
-
-      if (eic) {
-        showMsg(msg, (config.fixedCategoryName ? config.fixedCategoryName : catName) + ' published successfully. Redirecting…', 'success');
-        setTimeout(function () {
-          window.location.href = p + (config.redirectPage || 'articles/' + category + '.html');
-        }, 700);
-      } else {
-        showMsg(msg, 'Story submitted for peer review! Jang Mee (Editor-in-Chief) will review and verify your article before it appears on the website. Redirecting to your submissions…', 'success');
-        setTimeout(function () {
-          window.location.href = p + 'review-queue.html';
-        }, 1200);
+        if (eic) {
+          showMsg(msg, (config.fixedCategoryName ? config.fixedCategoryName : catName) + ' published successfully. Redirecting…', 'success');
+          setTimeout(function () {
+            window.location.href = p + (config.redirectPage || 'articles/' + category + '.html');
+          }, 700);
+        } else {
+          showMsg(msg, 'Story submitted for peer review! Jang Mee (Editor-in-Chief) will review and verify your article before it appears on the website. Redirecting to your submissions…', 'success');
+          setTimeout(function () {
+            window.location.href = p + 'review-queue.html';
+          }, 1200);
+        }
+      } catch (err) {
+        console.error(err);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = defaultButtonText;
+        }
+        showMsg(msg, 'Submission error: ' + (err.message || err), 'error');
       }
     });
   }
@@ -1003,7 +1068,6 @@
     var tabAll = document.getElementById('tabAll');
     var listContainer = document.getElementById('queueList');
     var emptyEl = document.getElementById('queueEmpty');
-    var statsBar = document.getElementById('queueStats');
 
     if (whoEl) {
       var roleText = eic ? ' (Editor-in-Chief)' : '';
@@ -1024,19 +1088,24 @@
     async function loadArticles() {
       listContainer.innerHTML = '<div class="queue-loading">Loading articles…</div>';
       var articles = [];
-      if (eic) {
-        if (currentTab === 'pending') {
-          articles = await global.MulatSupabase.fetchPendingArticles();
+      try {
+        if (eic) {
+          if (currentTab === 'pending') {
+            articles = await global.MulatSupabase.fetchPendingArticles();
+          } else {
+            articles = await global.MulatSupabase.fetchAllArticles();
+          }
         } else {
-          articles = await global.MulatSupabase.fetchAllArticles();
+          var mySubmissions = await global.MulatSupabase.fetchMemberSubmissions(member.id, member.name);
+          if (currentTab === 'pending') {
+            articles = mySubmissions.filter(function (a) { return a.status === 'pending'; });
+          } else {
+            articles = mySubmissions;
+          }
         }
-      } else {
-        var mySubmissions = await global.MulatSupabase.fetchMemberSubmissions(member.id, member.name);
-        if (currentTab === 'pending') {
-          articles = mySubmissions.filter(function (a) { return a.status === 'pending'; });
-        } else {
-          articles = mySubmissions;
-        }
+      } catch (e) {
+        console.error(e);
+        articles = [];
       }
 
       renderList(articles);

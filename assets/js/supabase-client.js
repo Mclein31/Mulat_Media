@@ -33,38 +33,36 @@
   }
 
   async function getCurrentMember() {
-    var sessionResult = await client.auth.getSession();
-    var session = sessionResult.data && sessionResult.data.session;
-    if (!session) return null;
+    try {
+      var sessionResult = await client.auth.getSession();
+      var session = sessionResult.data && sessionResult.data.session;
+      if (!session) return null;
 
-    var profileResult = await client
-      .from('profiles')
-      .select('name, is_eic, can_edit_acknowledgement')
-      .eq('id', session.user.id)
-      .maybeSingle();
+      var profileResult = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
 
-    if (profileResult.error || !profileResult.data) {
-      // Fallback to user metadata if profile select fails
-      var metaName = (session.user.user_metadata && session.user.user_metadata.name) || session.user.email;
-      var isEicFallback = metaName === 'Jang Mee B. Lee' || session.user.email === 'jangmee@mulatmedia.local';
+      var profile = profileResult && profileResult.data;
+      var name = (profile && profile.name) ||
+                 (session.user.user_metadata && session.user.user_metadata.name) ||
+                 session.user.email;
+
+      var isEic = (profile && (!!profile.is_eic || !!profile.can_edit_acknowledgement)) ||
+                  name === 'Jang Mee B. Lee' ||
+                  session.user.email === 'jangmee@mulatmedia.local';
+
       return {
         id: session.user.id,
-        name: metaName,
-        isEic: isEicFallback,
-        canEditAcknowledgement: isEicFallback
+        name: name,
+        isEic: isEic,
+        canEditAcknowledgement: isEic || (profile && !!profile.can_edit_acknowledgement)
       };
+    } catch (e) {
+      console.error('Error fetching current member:', e);
+      return null;
     }
-
-    var isEic = !!profileResult.data.is_eic || 
-                !!profileResult.data.can_edit_acknowledgement || 
-                profileResult.data.name === 'Jang Mee B. Lee';
-
-    return {
-      id: session.user.id,
-      name: profileResult.data.name,
-      isEic: isEic,
-      canEditAcknowledgement: isEic || !!profileResult.data.can_edit_acknowledgement
-    };
   }
 
   function onMemberChange(cb) {
@@ -84,6 +82,7 @@
   }
 
   function rowToArticle(row) {
+    if (!row) return null;
     return {
       id: row.id,
       category: row.category,
@@ -105,179 +104,259 @@
 
   // Public category feed: returns approved articles only
   async function fetchArticlesForCategory(category) {
-    var query = client
-      .from('articles')
-      .select('*')
-      .eq('category', category)
-      .order('created_at', { ascending: false });
+    try {
+      var query = client
+        .from('articles')
+        .select('*')
+        .eq('category', category)
+        .order('created_at', { ascending: false });
 
-    var result = await query;
-    if (result.error) {
-      console.error(result.error);
+      var result = await query;
+      if (result.error) {
+        console.error(result.error);
+        return [];
+      }
+      return result.data
+        .filter(function (r) { return !r.status || r.status === 'approved'; })
+        .map(rowToArticle);
+    } catch (e) {
+      console.error(e);
       return [];
     }
-    // Filter by approved if status column is present
-    return result.data
-      .filter(function (r) { return !r.status || r.status === 'approved'; })
-      .map(rowToArticle);
   }
 
   async function fetchArticleById(id) {
-    var result = await client
-      .from('articles')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-    if (result.error || !result.data) return null;
-    return rowToArticle(result.data);
+    try {
+      var result = await client
+        .from('articles')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (result.error || !result.data) return null;
+      return rowToArticle(result.data);
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   }
 
   // Fetch pending articles awaiting EIC review
   async function fetchPendingArticles() {
-    var result = await client
-      .from('articles')
-      .select('*')
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
-    if (result.error) {
-      console.error(result.error);
+    try {
+      var result = await client
+        .from('articles')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (result.error) {
+        console.error(result.error);
+        return [];
+      }
+      return result.data.map(rowToArticle);
+    } catch (e) {
+      console.error(e);
       return [];
     }
-    return result.data.map(rowToArticle);
   }
 
   // Fetch all submissions by a specific author
   async function fetchMemberSubmissions(memberId, memberName) {
-    var query = client.from('articles').select('*');
-    if (memberId) {
-      query = query.or('author_id.eq.' + memberId + (memberName ? ',author_name.eq.' + memberName : ''));
-    } else if (memberName) {
-      query = query.eq('author_name', memberName);
-    }
-    var result = await query.order('created_at', { ascending: false });
-    if (result.error) {
-      console.error(result.error);
+    try {
+      var query = client.from('articles').select('*');
+      if (memberId) {
+        query = query.or('author_id.eq.' + memberId + (memberName ? ',author_name.eq.' + memberName : ''));
+      } else if (memberName) {
+        query = query.eq('author_name', memberName);
+      }
+      var result = await query.order('created_at', { ascending: false });
+      if (result.error) {
+        console.error(result.error);
+        return [];
+      }
+      return result.data.map(rowToArticle);
+    } catch (e) {
+      console.error(e);
       return [];
     }
-    return result.data.map(rowToArticle);
   }
 
   // Fetch all articles (both approved and pending) for EIC review management
   async function fetchAllArticles() {
-    var result = await client
-      .from('articles')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (result.error) {
-      console.error(result.error);
+    try {
+      var result = await client
+        .from('articles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (result.error) {
+        console.error(result.error);
+        return [];
+      }
+      return result.data.map(rowToArticle);
+    } catch (e) {
+      console.error(e);
       return [];
     }
-    return result.data.map(rowToArticle);
   }
 
   // Publish article: if Jang Mee (EIC) submits, status is 'approved'.
   // If other members submit, status is 'pending' for EIC peer review.
   async function publishArticle(fields, member) {
-    var isEic = !!member.isEic || !!member.canEditAcknowledgement || member.name === 'Jang Mee B. Lee';
-    var status = isEic ? 'approved' : 'pending';
+    try {
+      var isEic = !!member.isEic || !!member.canEditAcknowledgement || member.name === 'Jang Mee B. Lee';
+      var status = isEic ? 'approved' : 'pending';
 
-    var payload = {
-      category: fields.category,
-      category_name: fields.categoryName,
-      tag: fields.tag,
-      title: fields.title,
-      excerpt: fields.excerpt,
-      body: fields.body,
-      image: fields.image || null,
-      read_time: fields.readTime,
-      author_id: member.id,
-      author_name: member.name,
-      status: status
-    };
+      var payload = {
+        category: fields.category,
+        category_name: fields.categoryName,
+        tag: fields.tag,
+        title: fields.title,
+        excerpt: fields.excerpt,
+        body: fields.body,
+        image: fields.image || null,
+        read_time: fields.readTime,
+        author_id: member.id,
+        author_name: member.name,
+        status: status
+      };
 
-    if (isEic) {
-      payload.reviewed_at = new Date().toISOString();
-      payload.reviewed_by = member.id;
+      if (isEic) {
+        payload.reviewed_at = new Date().toISOString();
+        payload.reviewed_by = member.id;
+      }
+
+      var result = await client
+        .from('articles')
+        .insert(payload)
+        .select()
+        .single();
+
+      if (result.error) {
+        // Graceful fallback if status/reviewed columns are missing in legacy DB schema
+        if (result.error.message && (
+          result.error.message.includes('status') ||
+          result.error.message.includes('reviewed_at') ||
+          result.error.message.includes('reviewed_by') ||
+          result.error.code === 'PGRST204'
+        )) {
+          var fallbackPayload = {
+            category: fields.category,
+            category_name: fields.categoryName,
+            tag: fields.tag,
+            title: fields.title,
+            excerpt: fields.excerpt,
+            body: fields.body,
+            image: fields.image || null,
+            read_time: fields.readTime,
+            author_id: member.id,
+            author_name: member.name
+          };
+          var fbResult = await client.from('articles').insert(fallbackPayload).select().single();
+          if (fbResult.error) return { ok: false, error: fbResult.error.message };
+          return { ok: true, article: rowToArticle(fbResult.data), status: status };
+        }
+        return { ok: false, error: result.error.message };
+      }
+      return { ok: true, article: rowToArticle(result.data), status: status };
+    } catch (e) {
+      console.error(e);
+      return { ok: false, error: e.message || 'Error publishing article' };
     }
-
-    var result = await client
-      .from('articles')
-      .insert(payload)
-      .select()
-      .single();
-
-    if (result.error) return { ok: false, error: result.error.message };
-    return { ok: true, article: rowToArticle(result.data), status: status };
   }
 
   // Approve a pending article (EIC only)
   async function approveArticleRemote(id, reviewerMember) {
-    var payload = {
-      status: 'approved',
-      reviewed_at: new Date().toISOString()
-    };
-    if (reviewerMember && reviewerMember.id) {
-      payload.reviewed_by = reviewerMember.id;
-    }
+    try {
+      var payload = {
+        status: 'approved',
+        reviewed_at: new Date().toISOString()
+      };
+      if (reviewerMember && reviewerMember.id) {
+        payload.reviewed_by = reviewerMember.id;
+      }
 
-    var result = await client
-      .from('articles')
-      .update(payload)
-      .eq('id', id)
-      .select();
+      var result = await client
+        .from('articles')
+        .update(payload)
+        .eq('id', id)
+        .select();
 
-    if (result.error) return { ok: false, error: result.error.message };
-    if (!result.data || !result.data.length) {
-      return { ok: false, error: 'Could not approve article. Check permissions.' };
+      if (result.error) {
+        if (result.error.message && (result.error.message.includes('reviewed_by') || result.error.message.includes('reviewed_at'))) {
+          var simpleResult = await client
+            .from('articles')
+            .update({ status: 'approved' })
+            .eq('id', id)
+            .select();
+          if (simpleResult.error) return { ok: false, error: simpleResult.error.message };
+          return { ok: true, article: rowToArticle(simpleResult.data[0]) };
+        }
+        return { ok: false, error: result.error.message };
+      }
+      if (!result.data || !result.data.length) {
+        return { ok: false, error: 'Could not approve article. Check database permissions.' };
+      }
+      return { ok: true, article: rowToArticle(result.data[0]) };
+    } catch (e) {
+      return { ok: false, error: e.message || 'Error approving article' };
     }
-    return { ok: true, article: rowToArticle(result.data[0]) };
   }
 
   async function updateArticleRemote(id, fields) {
-    var payload = {};
-    if (fields.category !== undefined) payload.category = fields.category;
-    if (fields.categoryName !== undefined) payload.category_name = fields.categoryName;
-    if (fields.tag !== undefined) payload.tag = fields.tag;
-    if (fields.title !== undefined) payload.title = fields.title;
-    if (fields.excerpt !== undefined) payload.excerpt = fields.excerpt;
-    if (fields.body !== undefined) payload.body = fields.body;
-    if (fields.image !== undefined) payload.image = fields.image;
-    if (fields.readTime !== undefined) payload.read_time = fields.readTime;
-    if (fields.status !== undefined) payload.status = fields.status;
+    try {
+      var payload = {};
+      if (fields.category !== undefined) payload.category = fields.category;
+      if (fields.categoryName !== undefined) payload.category_name = fields.categoryName;
+      if (fields.tag !== undefined) payload.tag = fields.tag;
+      if (fields.title !== undefined) payload.title = fields.title;
+      if (fields.excerpt !== undefined) payload.excerpt = fields.excerpt;
+      if (fields.body !== undefined) payload.body = fields.body;
+      if (fields.image !== undefined) payload.image = fields.image;
+      if (fields.readTime !== undefined) payload.read_time = fields.readTime;
+      if (fields.status !== undefined) payload.status = fields.status;
 
-    var result = await client
-      .from('articles')
-      .update(payload)
-      .eq('id', id)
-      .select();
+      var result = await client
+        .from('articles')
+        .update(payload)
+        .eq('id', id)
+        .select();
+      if (result.error) return { ok: false, error: result.error.message };
 
-    if (result.error) return { ok: false, error: result.error.message };
-
-    if (!result.data || !result.data.length) {
-      return { ok: false, error: 'You do not have permission to edit this post.' };
+      if (!result.data || !result.data.length) {
+        return { ok: false, error: 'You do not have permission to edit this post.' };
+      }
+      return { ok: true, article: rowToArticle(result.data[0]) };
+    } catch (e) {
+      return { ok: false, error: e.message || 'Error updating article' };
     }
-    return { ok: true, article: rowToArticle(result.data[0]) };
   }
 
   async function deleteArticleRemote(id) {
-    var result = await client
-      .from('articles')
-      .delete()
-      .eq('id', id)
-      .select();
-    if (result.error) return { ok: false, error: result.error.message };
-    if (!result.data || !result.data.length) {
-      return { ok: false, error: 'You do not have permission to delete this post.' };
+    try {
+      var result = await client
+        .from('articles')
+        .delete()
+        .eq('id', id)
+        .select();
+      if (result.error) return { ok: false, error: result.error.message };
+      if (!result.data || !result.data.length) {
+        return { ok: false, error: 'You do not have permission to delete this post.' };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message || 'Error deleting article' };
     }
-    return { ok: true };
   }
 
   async function uploadArticlePhoto(file) {
-    var path = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-    var uploadResult = await client.storage.from('article-photos').upload(path, file);
-    if (uploadResult.error) return { ok: false, error: uploadResult.error.message };
-    var publicUrlResult = client.storage.from('article-photos').getPublicUrl(path);
-    return { ok: true, url: publicUrlResult.data.publicUrl };
+    try {
+      var path = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      var uploadResult = await client.storage.from('article-photos').upload(path, file);
+      if (uploadResult.error) return { ok: false, error: uploadResult.error.message };
+      var publicUrlResult = client.storage.from('article-photos').getPublicUrl(path);
+      return { ok: true, url: publicUrlResult.data.publicUrl };
+    } catch (e) {
+      return { ok: false, error: e.message || 'Photo upload failed' };
+    }
   }
 
   global.MulatSupabase = {
