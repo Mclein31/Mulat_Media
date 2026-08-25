@@ -25,11 +25,32 @@
     if (!email) return { ok: false, error: 'Unrecognized member.' };
     var result = await client.auth.signInWithPassword({ email: email, password: password });
     if (result.error) return { ok: false, error: result.error.message };
+    
+    // Auto-ensure profile exists in profiles table
+    if (result.data && result.data.user) {
+      await ensureProfile(result.data.user, name);
+    }
     return { ok: true };
   }
 
   async function signOutMember() {
     await client.auth.signOut();
+  }
+
+  async function ensureProfile(user, optionalName) {
+    if (!user || !user.id) return;
+    try {
+      var name = optionalName || (user.user_metadata && user.user_metadata.name) || user.email;
+      var isEic = (name === 'Jang Mee B. Lee' || user.email === 'jangmee@mulatmedia.local');
+      await client.from('profiles').upsert({
+        id: user.id,
+        name: name,
+        is_eic: isEic,
+        can_edit_acknowledgement: isEic
+      }, { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Profile sync:', e);
+    }
   }
 
   async function getCurrentMember() {
@@ -52,6 +73,11 @@
       var isEic = (profile && (!!profile.is_eic || !!profile.can_edit_acknowledgement)) ||
                   name === 'Jang Mee B. Lee' ||
                   session.user.email === 'jangmee@mulatmedia.local';
+
+      // If no profile row yet, create it in the background
+      if (!profile) {
+        ensureProfile(session.user, name);
+      }
 
       return {
         id: session.user.id,
@@ -149,10 +175,10 @@
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       if (result.error) {
-        console.error(result.error);
+        console.error('fetchPendingArticles error:', result.error);
         return [];
       }
-      return result.data.map(rowToArticle);
+      return (result.data || []).map(rowToArticle);
     } catch (e) {
       console.error(e);
       return [];
@@ -162,20 +188,33 @@
   // Fetch all submissions by a specific author
   async function fetchMemberSubmissions(memberId, memberName) {
     try {
-      var query = client.from('articles').select('*');
+      var articles = [];
       if (memberId) {
-        query = query.or('author_id.eq.' + memberId + (memberName ? ',author_name.eq.' + memberName : ''));
-      } else if (memberName) {
-        query = query.eq('author_name', memberName);
+        var idResult = await client
+          .from('articles')
+          .select('*')
+          .eq('author_id', memberId)
+          .order('created_at', { ascending: false });
+        if (!idResult.error && idResult.data && idResult.data.length > 0) {
+          articles = idResult.data;
+        }
       }
-      var result = await query.order('created_at', { ascending: false });
-      if (result.error) {
-        console.error(result.error);
-        return [];
+
+      // If no rows found by author_id (e.g. legacy row), check author_name
+      if (articles.length === 0 && memberName) {
+        var nameResult = await client
+          .from('articles')
+          .select('*')
+          .eq('author_name', memberName)
+          .order('created_at', { ascending: false });
+        if (!nameResult.error && nameResult.data) {
+          articles = nameResult.data;
+        }
       }
-      return result.data.map(rowToArticle);
+
+      return articles.map(rowToArticle);
     } catch (e) {
-      console.error(e);
+      console.error('fetchMemberSubmissions error:', e);
       return [];
     }
   }
@@ -188,10 +227,10 @@
         .select('*')
         .order('created_at', { ascending: false });
       if (result.error) {
-        console.error(result.error);
+        console.error('fetchAllArticles error:', result.error);
         return [];
       }
-      return result.data.map(rowToArticle);
+      return (result.data || []).map(rowToArticle);
     } catch (e) {
       console.error(e);
       return [];
@@ -231,34 +270,12 @@
         .single();
 
       if (result.error) {
-        // Graceful fallback if status/reviewed columns are missing in legacy DB schema
-        if (result.error.message && (
-          result.error.message.includes('status') ||
-          result.error.message.includes('reviewed_at') ||
-          result.error.message.includes('reviewed_by') ||
-          result.error.code === 'PGRST204'
-        )) {
-          var fallbackPayload = {
-            category: fields.category,
-            category_name: fields.categoryName,
-            tag: fields.tag,
-            title: fields.title,
-            excerpt: fields.excerpt,
-            body: fields.body,
-            image: fields.image || null,
-            read_time: fields.readTime,
-            author_id: member.id,
-            author_name: member.name
-          };
-          var fbResult = await client.from('articles').insert(fallbackPayload).select().single();
-          if (fbResult.error) return { ok: false, error: fbResult.error.message };
-          return { ok: true, article: rowToArticle(fbResult.data), status: status };
-        }
+        console.error('publishArticle Supabase error:', result.error);
         return { ok: false, error: result.error.message };
       }
       return { ok: true, article: rowToArticle(result.data), status: status };
     } catch (e) {
-      console.error(e);
+      console.error('publishArticle exception:', e);
       return { ok: false, error: e.message || 'Error publishing article' };
     }
   }
@@ -281,15 +298,6 @@
         .select();
 
       if (result.error) {
-        if (result.error.message && (result.error.message.includes('reviewed_by') || result.error.message.includes('reviewed_at'))) {
-          var simpleResult = await client
-            .from('articles')
-            .update({ status: 'approved' })
-            .eq('id', id)
-            .select();
-          if (simpleResult.error) return { ok: false, error: simpleResult.error.message };
-          return { ok: true, article: rowToArticle(simpleResult.data[0]) };
-        }
         return { ok: false, error: result.error.message };
       }
       if (!result.data || !result.data.length) {

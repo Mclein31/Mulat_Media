@@ -858,6 +858,19 @@
     text-align:center;
     cursor:pointer;
     font-family:'DM Sans', sans-serif;
+    transition:background .18s ease, border-color .18s ease, color .18s ease;
+  }
+  .auth-submit.is-submitting{
+    opacity:0.85;
+    cursor:wait;
+    background:var(--ink-soft) !important;
+    border-color:var(--ink-soft) !important;
+  }
+  .auth-submit.is-submitted{
+    background:#047857 !important;
+    border-color:#047857 !important;
+    color:#fff !important;
+    cursor:default;
   }
   .auth-cancel{
     margin-top:10px;

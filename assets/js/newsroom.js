@@ -702,6 +702,7 @@
 
         if (submitBtn) {
           submitBtn.disabled = true;
+          submitBtn.classList.add('is-submitting');
           submitBtn.textContent = 'Submitting…';
         }
 
@@ -712,6 +713,7 @@
             showMsg(msg, 'Not connected to the database.', 'error');
             if (submitBtn) {
               submitBtn.disabled = false;
+              submitBtn.classList.remove('is-submitting');
               submitBtn.textContent = defaultButtonText;
             }
             return;
@@ -721,6 +723,7 @@
             showMsg(msg, uploadResult.error || 'Photo upload failed. Please try again.', 'error');
             if (submitBtn) {
               submitBtn.disabled = false;
+              submitBtn.classList.remove('is-submitting');
               submitBtn.textContent = defaultButtonText;
             }
             return;
@@ -749,18 +752,25 @@
             image: imageUrl,
             readTime: readTime + ' min read'
           });
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = defaultButtonText;
-          }
           if (!updated.ok) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('is-submitting');
+              submitBtn.textContent = defaultButtonText;
+            }
             showMsg(msg, updated.error || 'You do not have permission to save changes to this post.', 'error');
             return;
           }
-          showMsg(msg, 'Changes saved. Redirecting…', 'success');
+
+          if (submitBtn) {
+            submitBtn.classList.remove('is-submitting');
+            submitBtn.classList.add('is-submitted');
+            submitBtn.textContent = '✓ Changes Saved!';
+          }
+          showMsg(msg, 'Changes saved successfully. Redirecting…', 'success');
           setTimeout(function () {
             window.location.href = p + 'article.html?id=' + encodeURIComponent(editingArticle.id);
-          }, 600);
+          }, 700);
           return;
         }
 
@@ -775,13 +785,21 @@
           readTime: readTime + ' min read'
         });
 
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = defaultButtonText;
-        }
         if (!published.ok) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('is-submitting');
+            submitBtn.textContent = defaultButtonText;
+          }
           showMsg(msg, published.error || 'Could not submit article. Please check your database permissions.', 'error');
           return;
+        }
+
+        // Visual feedback: change button text to "✓ Submitted!"
+        if (submitBtn) {
+          submitBtn.classList.remove('is-submitting');
+          submitBtn.classList.add('is-submitted');
+          submitBtn.textContent = eic ? '✓ Published!' : '✓ Submitted!';
         }
 
         form.reset();
@@ -791,17 +809,18 @@
           showMsg(msg, (config.fixedCategoryName ? config.fixedCategoryName : catName) + ' published successfully. Redirecting…', 'success');
           setTimeout(function () {
             window.location.href = p + (config.redirectPage || 'articles/' + category + '.html');
-          }, 700);
+          }, 800);
         } else {
-          showMsg(msg, 'Story submitted for peer review! Jang Mee (Editor-in-Chief) will review and verify your article before it appears on the website. Redirecting to your submissions…', 'success');
+          showMsg(msg, '✓ Story submitted for peer review! Jang Mee (Editor-in-Chief) will review and verify your article before it appears on the website. Redirecting to My Submissions…', 'success');
           setTimeout(function () {
             window.location.href = p + 'review-queue.html';
-          }, 1200);
+          }, 1400);
         }
       } catch (err) {
         console.error(err);
         if (submitBtn) {
           submitBtn.disabled = false;
+          submitBtn.classList.remove('is-submitting');
           submitBtn.textContent = defaultButtonText;
         }
         showMsg(msg, 'Submission error: ' + (err.message || err), 'error');
@@ -1086,29 +1105,34 @@
     var currentTab = 'pending';
 
     async function loadArticles() {
-      listContainer.innerHTML = '<div class="queue-loading">Loading articles…</div>';
-      var articles = [];
+      listContainer.innerHTML = '<div class="queue-loading">Loading submissions…</div>';
+      var allSubmissions = [];
+      var pendingSubmissions = [];
+
       try {
         if (eic) {
-          if (currentTab === 'pending') {
-            articles = await global.MulatSupabase.fetchPendingArticles();
-          } else {
-            articles = await global.MulatSupabase.fetchAllArticles();
-          }
+          allSubmissions = await global.MulatSupabase.fetchAllArticles();
+          pendingSubmissions = allSubmissions.filter(function (a) { return a.status === 'pending'; });
         } else {
-          var mySubmissions = await global.MulatSupabase.fetchMemberSubmissions(member.id, member.name);
-          if (currentTab === 'pending') {
-            articles = mySubmissions.filter(function (a) { return a.status === 'pending'; });
-          } else {
-            articles = mySubmissions;
-          }
+          allSubmissions = await global.MulatSupabase.fetchMemberSubmissions(member.id, member.name);
+          pendingSubmissions = allSubmissions.filter(function (a) { return a.status === 'pending'; });
         }
       } catch (e) {
-        console.error(e);
-        articles = [];
+        console.error('Error loading queue:', e);
+        allSubmissions = [];
+        pendingSubmissions = [];
       }
 
-      renderList(articles);
+      // Update tab labels with counts
+      if (tabPending) {
+        tabPending.textContent = (eic ? 'Pending Review' : 'Pending Verification') + ' (' + pendingSubmissions.length + ')';
+      }
+      if (tabAll) {
+        tabAll.textContent = (eic ? 'All Stories' : 'All Submissions') + ' (' + allSubmissions.length + ')';
+      }
+
+      var displayArticles = currentTab === 'pending' ? pendingSubmissions : allSubmissions;
+      renderList(displayArticles);
     }
 
     function renderList(articles) {
