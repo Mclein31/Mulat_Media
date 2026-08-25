@@ -49,7 +49,7 @@
         can_edit_acknowledgement: isEic
       }, { onConflict: 'id' });
     } catch (e) {
-      console.warn('Profile sync:', e);
+      // Profile sync notice
     }
   }
 
@@ -73,11 +73,6 @@
       var isEic = (profile && (!!profile.is_eic || !!profile.can_edit_acknowledgement)) ||
                   name === 'Jang Mee B. Lee' ||
                   session.user.email === 'jangmee@mulatmedia.local';
-
-      // If no profile row yet, create it in the background
-      if (!profile) {
-        ensureProfile(session.user, name);
-      }
 
       return {
         id: session.user.id,
@@ -124,7 +119,7 @@
       status: row.status || 'approved',
       reviewedAt: row.reviewed_at,
       reviewedBy: row.reviewed_by,
-      date: new Date(row.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      date: new Date(row.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     };
   }
 
@@ -188,31 +183,44 @@
   // Fetch all submissions by a specific author
   async function fetchMemberSubmissions(memberId, memberName) {
     try {
-      var articles = [];
+      var all = [];
       if (memberId) {
-        var idResult = await client
+        var idRes = await client
           .from('articles')
           .select('*')
           .eq('author_id', memberId)
           .order('created_at', { ascending: false });
-        if (!idResult.error && idResult.data && idResult.data.length > 0) {
-          articles = idResult.data;
+        if (!idRes.error && idRes.data && idRes.data.length > 0) {
+          all = idRes.data;
         }
       }
 
-      // If no rows found by author_id (e.g. legacy row), check author_name
-      if (articles.length === 0 && memberName) {
-        var nameResult = await client
+      if (all.length === 0 && memberName) {
+        var nameRes = await client
           .from('articles')
           .select('*')
           .eq('author_name', memberName)
           .order('created_at', { ascending: false });
-        if (!nameResult.error && nameResult.data) {
-          articles = nameResult.data;
+        if (!nameRes.error && nameRes.data && nameRes.data.length > 0) {
+          all = nameRes.data;
         }
       }
 
-      return articles.map(rowToArticle);
+      // Fallback: general query filtered client-side if RLS allows
+      if (all.length === 0) {
+        var generalRes = await client
+          .from('articles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!generalRes.error && generalRes.data) {
+          all = generalRes.data.filter(function (a) {
+            return (memberId && a.author_id === memberId) || 
+                   (memberName && a.author_name && a.author_name.trim().toLowerCase() === memberName.trim().toLowerCase());
+          });
+        }
+      }
+
+      return all.map(rowToArticle);
     } catch (e) {
       console.error('fetchMemberSubmissions error:', e);
       return [];
@@ -266,14 +274,15 @@
       var result = await client
         .from('articles')
         .insert(payload)
-        .select()
-        .single();
+        .select();
 
       if (result.error) {
         console.error('publishArticle Supabase error:', result.error);
         return { ok: false, error: result.error.message };
       }
-      return { ok: true, article: rowToArticle(result.data), status: status };
+
+      var createdRow = (result.data && result.data.length) ? result.data[0] : payload;
+      return { ok: true, article: rowToArticle(createdRow), status: status };
     } catch (e) {
       console.error('publishArticle exception:', e);
       return { ok: false, error: e.message || 'Error publishing article' };

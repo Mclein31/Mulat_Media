@@ -1018,6 +1018,9 @@
     if (!el) return;
     el.textContent = text;
     el.className = 'form-msg show ' + type;
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {}
   }
 
   function initCategoryTabsScroll() {
