@@ -368,7 +368,15 @@
     try {
       var path = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
       var uploadResult = await client.storage.from('article-photos').upload(path, file);
-      if (uploadResult.error) return { ok: false, error: uploadResult.error.message };
+      if (uploadResult.error) {
+        if (uploadResult.error.message && uploadResult.error.message.toLowerCase().includes('bucket not found')) {
+          return {
+            ok: false,
+            error: 'Storage bucket "article-photos" not found in Supabase. Please run the SQL snippet to create the bucket or create a public bucket named "article-photos" under Storage in your Supabase dashboard.'
+          };
+        }
+        return { ok: false, error: uploadResult.error.message };
+      }
       var publicUrlResult = client.storage.from('article-photos').getPublicUrl(path);
       return { ok: true, url: publicUrlResult.data.publicUrl };
     } catch (e) {
