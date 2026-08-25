@@ -23,7 +23,6 @@
     return document.body.getAttribute('data-prefix') || '';
   }
 
-
   function editPageFor(category) {
     if (category === 'acknowledgement') return 'submit-acknowledgement.html';
     if (category === 'special-features') return 'submit-special-feature.html';
@@ -50,7 +49,7 @@
 
   function hasSupabase() {
     if (!global.MulatSupabase) {
-      console.error('MulatSupabase is not loaded — check that supabase-client.js is included before newsroom.js, and that SUPABASE_URL / SUPABASE_ANON_KEY are filled in.');
+      console.error('MulatSupabase is not loaded — check that supabase-client.js is included before newsroom.js.');
       return false;
     }
     return true;
@@ -91,14 +90,42 @@
     window.location.href = targetPath;
   }
 
+  // Jang Mee B. Lee is the Editor-in-Chief (EIC)
   function isJangMee() {
-    return !!cachedMember && !!cachedMember.canEditAcknowledgement;
+    if (!cachedMember) return false;
+    return !!cachedMember.isEic || !!cachedMember.canEditAcknowledgement || cachedMember.name === 'Jang Mee B. Lee';
+  }
+
+  // Jang Mee can edit ALL articles. Members can ONLY edit their own work.
+  function canEditArticle(article) {
+    if (!cachedMember) return false;
+    if (isJangMee()) return true;
+    if (!article) return false;
+    if (article.category === 'acknowledgement') return false;
+    if (article.authorId && cachedMember.id && article.authorId === cachedMember.id) return true;
+    if (article.author && cachedMember.name && article.author.trim().toLowerCase() === cachedMember.name.trim().toLowerCase()) return true;
+    return false;
+  }
+
+  // Jang Mee can delete ALL articles. Members can ONLY delete their own work.
+  function canDeleteArticle(article) {
+    if (!cachedMember) return false;
+    if (isJangMee()) return true;
+    if (!article) return false;
+    if (article.category === 'acknowledgement') return false;
+    if (article.authorId && cachedMember.id && article.authorId === cachedMember.id) return true;
+    if (article.author && cachedMember.name && article.author.trim().toLowerCase() === cachedMember.name.trim().toLowerCase()) return true;
+    return false;
+  }
+
+  // Only Jang Mee (EIC) can approve pending articles
+  function canApproveArticle(article) {
+    if (!cachedMember) return false;
+    return isJangMee() && (!article || article.status === 'pending');
   }
 
   function canManageArticle(article) {
-    if (!cachedMember) return false;
-    if (article && article.category === 'acknowledgement') return !!cachedMember.canEditAcknowledgement;
-    return true;
+    return canEditArticle(article) || canDeleteArticle(article);
   }
 
   async function getArticlesForCategory(slug) {
@@ -127,6 +154,11 @@
     return await global.MulatSupabase.deleteArticleRemote(id);
   }
 
+  async function approveArticle(id) {
+    if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
+    if (!isJangMee()) return { ok: false, error: 'Only Jang Mee (Editor-in-Chief) can approve articles.' };
+    return await global.MulatSupabase.approveArticleRemote(id, cachedMember);
+  }
 
   async function renderAuthCta(containerId, options) {
     var el = document.getElementById(containerId || 'authCta');
@@ -140,19 +172,42 @@
     var canAdd = options.canAdd !== false;
 
     if (member) {
+      var eic = isJangMee();
       var addHtml = canAdd
         ? '<a href="' + p + addPage + '" class="btn-sm">' + escapeHtml(addLabel) + '</a>'
         : '';
+      
+      var queueLabel = eic ? 'Review Queue' : 'My Submissions';
+      var queueHtml = '<a href="' + p + 'review-queue.html" class="btn-sm btn-queue" id="newsroomQueueBtn">' + 
+        escapeHtml(queueLabel) + 
+        (eic ? ' <span class="badge-count" id="headerPendingCount" style="display:none;"></span>' : '') + 
+        '</a>';
+
+      var roleBadge = eic ? '<span class="role-pill">EIC</span>' : '';
+
       el.innerHTML =
-        '<span class="member-badge">Signed in as <strong>' + escapeHtml(member.name) + '</strong></span>' +
+        '<span class="member-badge">Signed in as <strong>' + escapeHtml(member.name) + '</strong> ' + roleBadge + '</span>' +
+        queueHtml +
         addHtml +
         '<a href="#" class="logout-link" id="newsroomLogoutLink">Log out</a>';
+
       var logoutLink = document.getElementById('newsroomLogoutLink');
       if (logoutLink) {
         logoutLink.addEventListener('click', function (e) {
           e.preventDefault();
           signOutAndRedirect(p + 'articles.html');
         });
+      }
+
+      // Check pending count for EIC
+      if (eic && hasSupabase()) {
+        global.MulatSupabase.fetchPendingArticles().then(function (pending) {
+          var countEl = document.getElementById('headerPendingCount');
+          if (countEl && pending && pending.length > 0) {
+            countEl.textContent = String(pending.length);
+            countEl.style.display = 'inline-block';
+          }
+        }).catch(function () {});
       }
     } else {
       var redirectTarget = currentPageForRedirect();
@@ -171,24 +226,19 @@
 
     var redirectParam = new URLSearchParams(window.location.search).get('redirect');
     if (redirectParam && (/^https?:\/\//i.test(redirectParam) || redirectParam.indexOf('//') === 0)) {
-      redirectParam = null; // ignore anything that looks like an external URL
+      redirectParam = null;
     }
     var redirectTarget = p + (redirectParam || 'articles.html');
 
     MEMBERS.forEach(function (name) {
       var opt = document.createElement('option');
       opt.value = name;
-      opt.textContent = name;
+      opt.textContent = name + (name === 'Jang Mee B. Lee' ? ' (Editor-in-Chief)' : '');
       select.appendChild(opt);
     });
 
-
     await ensureMember();
     if (getMember()) {
-      // If they landed here via a real redirect (e.g. "log in to
-      // publish"), send them straight on. Otherwise — they just
-      // navigated to the login page while already signed in — show
-      // the account panel (change password / log out) instead.
       if (redirectParam) {
         window.location.href = redirectTarget;
         return;
@@ -241,7 +291,8 @@
     var member = getMember();
     var signedInAs = document.getElementById('accountSignedInAs');
     if (signedInAs && member) {
-      signedInAs.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>.';
+      var roleText = isJangMee() ? ' (Editor-in-Chief)' : '';
+      signedInAs.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>' + roleText + '.';
     }
 
     var logoutLink = document.getElementById('accountLogoutLink');
@@ -287,7 +338,6 @@
       showMsg(msg, 'Password updated.', 'success');
     });
   }
-
 
   function initCategoryPicker(config) {
     config = config || {};
@@ -364,7 +414,6 @@
     return { setValue: setValue };
   }
 
-
   async function initSubmitFormCore(config) {
     config = config || {};
     var form = document.getElementById('articleForm');
@@ -379,9 +428,11 @@
       return;
     }
 
+    var eic = isJangMee();
     var who = document.getElementById('submitWho');
     if (who) {
-      who.innerHTML = 'Posting as <strong>' + escapeHtml(member.name) + '</strong>';
+      var roleText = eic ? ' (Editor-in-Chief)' : '';
+      who.innerHTML = 'Posting as <strong>' + escapeHtml(member.name) + '</strong>' + roleText;
     }
     var logout = document.getElementById('submitLogout');
     if (logout) {
@@ -409,40 +460,49 @@
       placeholder: 'Select a section…'
     });
 
-
     if (config.fixedCategory && typeof config.requirePermission === 'function' && !config.requirePermission()) {
       showMsg(msg, config.deniedMessage || 'You do not have permission to publish here.', 'error');
       form.hidden = true;
       return;
     }
 
-
     var editId = new URLSearchParams(window.location.search).get('edit');
     var editingArticle = editId ? await getArticleById(editId) : null;
 
     if (editId && !editingArticle) {
       showMsg(msg, 'That article could not be found — it may have already been removed.', 'error');
+      form.hidden = true;
+      return;
     } else if (editingArticle && config.fixedCategory && editingArticle.category !== config.fixedCategory) {
-      editingArticle = null;
       showMsg(msg, 'That post isn\'t part of this section.', 'error');
-    } else if (editingArticle && !canManageArticle(editingArticle)) {
-      editingArticle = null;
-      showMsg(msg, 'You do not have permission to edit this post.', 'error');
+      form.hidden = true;
+      return;
+    } else if (editingArticle && !canEditArticle(editingArticle)) {
+      showMsg(msg, 'You can only edit your own work. Only the author or Jang Mee (Editor-in-Chief) can edit this story.', 'error');
+      form.hidden = true;
+      return;
     }
+
+    var submitBtnText = document.getElementById('submitBtnText');
+    var cardSub = document.getElementById('submitCardSub');
 
     if (editingArticle) {
       var eyebrow = document.getElementById('submitEyebrow');
       var pageTitle = document.getElementById('submitPageTitle');
       var statement = document.getElementById('submitStatement');
       var cardTitle = document.getElementById('submitCardTitle');
-      var cardSub = document.getElementById('submitCardSub');
-      var submitBtnText = document.getElementById('submitBtnText');
       var cancelBtn = document.getElementById('submitCancelBtn');
-      if (eyebrow) eyebrow.textContent = 'Members Only — Editing';
+      if (eyebrow) eyebrow.textContent = 'Newsroom — Editing Story';
       if (pageTitle) pageTitle.textContent = 'Edit ' + (config.fixedCategoryName ? config.fixedCategoryName.replace(/s$/, '') : 'Article');
       if (statement) statement.textContent = '"Update the story below. Changes are saved right away."';
       if (cardTitle) cardTitle.textContent = 'Edit ' + (config.fixedCategoryName ? config.fixedCategoryName.replace(/s$/, '') : 'Article');
-      if (cardSub) cardSub.textContent = 'Changes replace the current version of this post for every reader.';
+      if (cardSub) {
+        if (editingArticle.status === 'pending') {
+          cardSub.innerHTML = '<span class="status-badge pending">Pending EIC Review</span> Update this draft before Jang Mee reviews it for publication.';
+        } else {
+          cardSub.textContent = 'Changes replace the current version of this post for every reader.';
+        }
+      }
       if (submitBtnText) submitBtnText.textContent = 'Save Changes';
       if (cancelBtn) {
         cancelBtn.hidden = false;
@@ -468,10 +528,19 @@
       }
       var rtMatch = /(\d+)/.exec(editingArticle.readTime || '');
       document.getElementById('articleReadTime').value = rtMatch ? rtMatch[1] : '4';
+    } else {
+      // New article creation
+      if (submitBtnText) {
+        submitBtnText.textContent = eic 
+          ? (config.fixedCategoryName ? 'Publish ' + config.fixedCategoryName.replace(/s$/, '') : 'Publish Article')
+          : 'Submit for Peer Review';
+      }
+      if (cardSub && !eic) {
+        cardSub.innerHTML = 'Stories submitted by newsroom members are sent to <strong>Jang Mee (Editor-in-Chief)</strong> for verification and peer review before appearing live on the website.';
+      }
     }
 
-
-    var MAX_IMAGE_BYTES = 5 * 1024 * 1024; 
+    var MAX_IMAGE_BYTES = 5 * 1024 * 1024;
     var pendingImageFile = null;
 
     var dropzone = document.getElementById('imageDropzone');
@@ -658,12 +727,20 @@
         return;
       }
 
-      showMsg(msg, (config.fixedCategoryName ? config.fixedCategoryName : catName) + ' published. Redirecting…', 'success');
       form.reset();
       clearPreview();
-      setTimeout(function () {
-        window.location.href = p + (config.redirectPage || 'articles/' + category + '.html');
-      }, 700);
+
+      if (eic) {
+        showMsg(msg, (config.fixedCategoryName ? config.fixedCategoryName : catName) + ' published successfully. Redirecting…', 'success');
+        setTimeout(function () {
+          window.location.href = p + (config.redirectPage || 'articles/' + category + '.html');
+        }, 700);
+      } else {
+        showMsg(msg, 'Story submitted for peer review! Jang Mee (Editor-in-Chief) will review and verify your article before it appears on the website. Redirecting to your submissions…', 'success');
+        setTimeout(function () {
+          window.location.href = p + 'review-queue.html';
+        }, 1200);
+      }
     });
   }
 
@@ -679,14 +756,14 @@
       fixedCategoryName: 'Acknowledgement',
       fixedCategoryDesc: 'Reminders and announcements from the newsroom.',
       requirePermission: isJangMee,
-      deniedMessage: 'You do not have permission to publish to Acknowledgement.',
+      deniedMessage: 'Only Jang Mee B. Lee (Editor-in-Chief) has permission to publish to Acknowledgement.',
       redirectPage: 'acknowledgement.html',
       selfPage: 'submit-acknowledgement.html',
       logoutRedirect: 'acknowledgement.html'
     });
   }
 
-  /* ---------- submit-special-feature.html — any signed-in member ---------- */
+  /* ---------- submit-special-feature.html — essays & features ---------- */
   function initSubmitSpecialFeatureForm() {
     return initSubmitFormCore({
       fixedCategory: 'special-features',
@@ -699,20 +776,46 @@
   }
 
   function ownerActionsHtml(a, p) {
+    var isPending = a.status === 'pending';
     return (
-      '<div class="card-owner-actions" data-owner-actions data-category="' + escapeHtml(a.category) + '" hidden>' +
-      '  <a href="' + p + editPageFor(a.category) + '?edit=' + encodeURIComponent(a.id) + '" class="card-edit-link">Edit</a>' +
-      '  <button type="button" class="card-delete-btn" data-delete-id="' + escapeHtml(String(a.id)) + '" data-delete-title="' + escapeHtml(a.title) + '">Delete</button>' +
+      '<div class="card-owner-actions" data-owner-actions ' +
+      'data-category="' + escapeHtml(a.category) + '" ' +
+      'data-author-id="' + escapeHtml(a.authorId || '') + '" ' +
+      'data-author-name="' + escapeHtml(a.author || '') + '" ' +
+      'data-status="' + escapeHtml(a.status || 'approved') + '" hidden>' +
+      (isPending ? '<span class="status-badge pending">Pending EIC Review</span>' : '') +
+      '  <a href="' + p + editPageFor(a.category) + '?edit=' + encodeURIComponent(a.id) + '" class="card-edit-link" data-action="edit">Edit</a>' +
+      '  <button type="button" class="card-delete-btn" data-delete-id="' + escapeHtml(String(a.id)) + '" data-delete-title="' + escapeHtml(a.title) + '" data-action="delete">Delete</button>' +
       '</div>'
     );
   }
 
   function revealOwnerActions(root) {
     var scope = root || document;
+    var member = getMember();
+    var eic = isJangMee();
     Array.prototype.forEach.call(scope.querySelectorAll('[data-owner-actions]'), function (el) {
+      if (!member) {
+        el.hidden = true;
+        return;
+      }
       var category = el.getAttribute('data-category') || '';
-      var allowed = category === 'acknowledgement' ? isJangMee() : !!getMember();
-      el.hidden = !allowed;
+      var authorId = el.getAttribute('data-author-id') || '';
+      var authorName = el.getAttribute('data-author-name') || '';
+
+      var isOwner = (authorId && member.id && authorId === member.id) ||
+                    (authorName && authorName.trim().toLowerCase() === member.name.trim().toLowerCase());
+
+      var canEdit = eic || (isOwner && category !== 'acknowledgement');
+      var canDelete = eic || (isOwner && category !== 'acknowledgement');
+
+      var editLink = el.querySelector('[data-action="edit"]');
+      var deleteBtn = el.querySelector('[data-action="delete"]');
+
+      if (editLink) editLink.hidden = !canEdit;
+      if (deleteBtn) deleteBtn.hidden = !canDelete;
+
+      el.hidden = !canEdit && !canDelete;
     });
   }
 
@@ -881,11 +984,176 @@
 
   document.addEventListener('DOMContentLoaded', initCategoryTabsScroll);
 
+  /* ---------- review-queue.html — EIC Verification & Member Submissions ---------- */
+  async function initReviewQueuePage() {
+    var p = prefix();
+    await ensureMember();
+    var member = getMember();
+
+    if (!member) {
+      window.location.href = p + 'login.html?redirect=review-queue.html';
+      return;
+    }
+
+    var eic = isJangMee();
+    var pageTitle = document.getElementById('queuePageTitle');
+    var pageStatement = document.getElementById('queuePageStatement');
+    var whoEl = document.getElementById('queueWho');
+    var tabPending = document.getElementById('tabPending');
+    var tabAll = document.getElementById('tabAll');
+    var listContainer = document.getElementById('queueList');
+    var emptyEl = document.getElementById('queueEmpty');
+    var statsBar = document.getElementById('queueStats');
+
+    if (whoEl) {
+      var roleText = eic ? ' (Editor-in-Chief)' : '';
+      whoEl.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>' + roleText;
+    }
+
+    if (pageTitle) {
+      pageTitle.textContent = eic ? 'Editorial Review Queue' : 'My Submissions';
+    }
+    if (pageStatement) {
+      pageStatement.textContent = eic
+        ? '"Verify, edit, approve, or reject stories submitted by newsroom members before publishing."'
+        : '"Track the peer review status of your articles and edit your submissions."';
+    }
+
+    var currentTab = 'pending';
+
+    async function loadArticles() {
+      listContainer.innerHTML = '<div class="queue-loading">Loading articles…</div>';
+      var articles = [];
+      if (eic) {
+        if (currentTab === 'pending') {
+          articles = await global.MulatSupabase.fetchPendingArticles();
+        } else {
+          articles = await global.MulatSupabase.fetchAllArticles();
+        }
+      } else {
+        var mySubmissions = await global.MulatSupabase.fetchMemberSubmissions(member.id, member.name);
+        if (currentTab === 'pending') {
+          articles = mySubmissions.filter(function (a) { return a.status === 'pending'; });
+        } else {
+          articles = mySubmissions;
+        }
+      }
+
+      renderList(articles);
+    }
+
+    function renderList(articles) {
+      if (!articles || !articles.length) {
+        listContainer.innerHTML = '';
+        if (emptyEl) {
+          emptyEl.hidden = false;
+          emptyEl.textContent = currentTab === 'pending'
+            ? (eic ? 'No articles currently awaiting review. All caught up!' : 'You have no pending submissions awaiting review.')
+            : 'No articles found in this view.';
+        }
+        return;
+      }
+
+      if (emptyEl) emptyEl.hidden = true;
+
+      listContainer.innerHTML = articles.map(function (a) {
+        var isPending = a.status === 'pending';
+        var statusBadge = isPending
+          ? '<span class="status-badge pending">&#9203; Pending EIC Verification</span>'
+          : '<span class="status-badge approved">&#10003; Published Live</span>';
+
+        var mediaHtml = a.image
+          ? '<div class="queue-card-thumb"><img src="' + escapeHtml(a.image) + '" alt=""></div>'
+          : '<div class="queue-card-thumb placeholder"><span>' + escapeHtml(a.categoryName) + '</span></div>';
+
+        var approveBtnHtml = (eic && isPending)
+          ? '<button type="button" class="btn-approve" data-approve-id="' + escapeHtml(String(a.id)) + '">&#10003; Approve &amp; Publish</button>'
+          : '';
+
+        var canEditThis = canEditArticle(a);
+        var canDeleteThis = canDeleteArticle(a);
+
+        var editBtnHtml = canEditThis
+          ? '<a href="' + p + editPageFor(a.category) + '?edit=' + encodeURIComponent(a.id) + '" class="btn-queue-action btn-edit">Edit</a>'
+          : '';
+
+        var deleteBtnHtml = canDeleteThis
+          ? '<button type="button" class="btn-queue-action btn-delete" data-delete-id="' + escapeHtml(String(a.id)) + '" data-delete-title="' + escapeHtml(a.title) + '">Delete</button>'
+          : '';
+
+        return (
+          '<div class="queue-card' + (isPending ? ' is-pending' : '') + '">' +
+          mediaHtml +
+          '<div class="queue-card-body">' +
+          '  <div class="queue-card-header">' +
+          '    <span class="tag">' + escapeHtml(a.tag || a.categoryName) + ' &middot; ' + escapeHtml(a.categoryName) + '</span>' +
+          '    ' + statusBadge +
+          '  </div>' +
+          '  <h3 class="queue-card-title">' + escapeHtml(a.title) + '</h3>' +
+          '  <div class="queue-card-meta">' + metaLine(a) + '</div>' +
+          '  <p class="queue-card-excerpt">' + escapeHtml(a.excerpt) + '</p>' +
+          '  <div class="queue-card-actions">' +
+          '    <a href="' + p + 'article.html?id=' + encodeURIComponent(a.id) + '" class="btn-queue-action btn-preview">Preview Full Story &rarr;</a>' +
+          approveBtnHtml +
+          editBtnHtml +
+          deleteBtnHtml +
+          '  </div>' +
+          '</div>' +
+          '</div>'
+        );
+      }).join('');
+
+      // Wire up approval buttons
+      Array.prototype.forEach.call(listContainer.querySelectorAll('.btn-approve'), function (btn) {
+        btn.addEventListener('click', async function (e) {
+          e.preventDefault();
+          var id = btn.getAttribute('data-approve-id');
+          btn.disabled = true;
+          btn.textContent = 'Approving…';
+          var res = await approveArticle(id);
+          if (res.ok) {
+            loadArticles();
+          } else {
+            window.alert(res.error || 'Approval failed.');
+            btn.disabled = false;
+            btn.textContent = 'Approve & Publish';
+          }
+        });
+      });
+
+      // Wire up delete buttons
+      wireDeleteButtons(listContainer, function () { loadArticles(); });
+    }
+
+    if (tabPending) {
+      tabPending.addEventListener('click', function () {
+        currentTab = 'pending';
+        tabPending.classList.add('active');
+        if (tabAll) tabAll.classList.remove('active');
+        loadArticles();
+      });
+    }
+
+    if (tabAll) {
+      tabAll.addEventListener('click', function () {
+        currentTab = 'all';
+        tabAll.classList.add('active');
+        if (tabPending) tabPending.classList.remove('active');
+        loadArticles();
+      });
+    }
+
+    loadArticles();
+  }
+
   global.MulatNewsroom = {
     MEMBERS: MEMBERS,
     CATEGORIES: CATEGORIES,
     isJangMee: isJangMee,
     canManageArticle: canManageArticle,
+    canEditArticle: canEditArticle,
+    canDeleteArticle: canDeleteArticle,
+    canApproveArticle: canApproveArticle,
     editPageFor: editPageFor,
     getMember: getMember,
     ensureMember: ensureMember,
@@ -895,6 +1163,7 @@
     addArticle: addArticle,
     updateArticle: updateArticle,
     deleteArticle: deleteArticle,
+    approveArticle: approveArticle,
     ownerActionsHtml: ownerActionsHtml,
     revealOwnerActions: revealOwnerActions,
     wireDeleteButtons: wireDeleteButtons,
@@ -903,6 +1172,7 @@
     initSubmitForm: initSubmitForm,
     initSubmitAcknowledgementForm: initSubmitAcknowledgementForm,
     initSubmitSpecialFeatureForm: initSubmitSpecialFeatureForm,
+    initReviewQueuePage: initReviewQueuePage,
     renderCategoryFeed: renderCategoryFeed,
     initCategoryTabsScroll: initCategoryTabsScroll
   };

@@ -39,16 +39,31 @@
 
     var profileResult = await client
       .from('profiles')
-      .select('name, can_edit_acknowledgement')
+      .select('name, is_eic, can_edit_acknowledgement')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileResult.error || !profileResult.data) return null;
+    if (profileResult.error || !profileResult.data) {
+      // Fallback to user metadata if profile select fails
+      var metaName = (session.user.user_metadata && session.user.user_metadata.name) || session.user.email;
+      var isEicFallback = metaName === 'Jang Mee B. Lee' || session.user.email === 'jangmee@mulatmedia.local';
+      return {
+        id: session.user.id,
+        name: metaName,
+        isEic: isEicFallback,
+        canEditAcknowledgement: isEicFallback
+      };
+    }
+
+    var isEic = !!profileResult.data.is_eic || 
+                !!profileResult.data.can_edit_acknowledgement || 
+                profileResult.data.name === 'Jang Mee B. Lee';
 
     return {
       id: session.user.id,
       name: profileResult.data.name,
-      canEditAcknowledgement: !!profileResult.data.can_edit_acknowledgement
+      isEic: isEic,
+      canEditAcknowledgement: isEic || !!profileResult.data.can_edit_acknowledgement
     };
   }
 
@@ -59,10 +74,6 @@
   }
 
   // Lets a signed-in member set a new password for themselves.
-  // Supabase trusts the active session here — it doesn't ask for the
-  // current password — so callers should re-verify it first (e.g. via
-  // signInMember) if they want that extra confirmation step.
-  // Returns { ok: true } or { ok: false, error }.
   async function changeMemberPassword(newPassword) {
     if (!newPassword || newPassword.length < 6) {
       return { ok: false, error: 'Password must be at least 6 characters.' };
@@ -84,21 +95,31 @@
       image: row.image,
       readTime: row.read_time,
       author: row.author_name,
+      authorId: row.author_id,
+      status: row.status || 'approved',
+      reviewedAt: row.reviewed_at,
+      reviewedBy: row.reviewed_by,
       date: new Date(row.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     };
   }
 
+  // Public category feed: returns approved articles only
   async function fetchArticlesForCategory(category) {
-    var result = await client
+    var query = client
       .from('articles')
       .select('*')
       .eq('category', category)
       .order('created_at', { ascending: false });
+
+    var result = await query;
     if (result.error) {
       console.error(result.error);
       return [];
     }
-    return result.data.map(rowToArticle);
+    // Filter by approved if status column is present
+    return result.data
+      .filter(function (r) { return !r.status || r.status === 'approved'; })
+      .map(rowToArticle);
   }
 
   async function fetchArticleById(id) {
@@ -111,25 +132,105 @@
     return rowToArticle(result.data);
   }
 
-  async function publishArticle(fields, member) {
+  // Fetch pending articles awaiting EIC review
+  async function fetchPendingArticles() {
     var result = await client
       .from('articles')
-      .insert({
-        category: fields.category,
-        category_name: fields.categoryName,
-        tag: fields.tag,
-        title: fields.title,
-        excerpt: fields.excerpt,
-        body: fields.body,
-        image: fields.image || null,
-        read_time: fields.readTime,
-        author_id: member.id,
-        author_name: member.name
-      })
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (result.error) {
+      console.error(result.error);
+      return [];
+    }
+    return result.data.map(rowToArticle);
+  }
+
+  // Fetch all submissions by a specific author
+  async function fetchMemberSubmissions(memberId, memberName) {
+    var query = client.from('articles').select('*');
+    if (memberId) {
+      query = query.or('author_id.eq.' + memberId + (memberName ? ',author_name.eq.' + memberName : ''));
+    } else if (memberName) {
+      query = query.eq('author_name', memberName);
+    }
+    var result = await query.order('created_at', { ascending: false });
+    if (result.error) {
+      console.error(result.error);
+      return [];
+    }
+    return result.data.map(rowToArticle);
+  }
+
+  // Fetch all articles (both approved and pending) for EIC review management
+  async function fetchAllArticles() {
+    var result = await client
+      .from('articles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (result.error) {
+      console.error(result.error);
+      return [];
+    }
+    return result.data.map(rowToArticle);
+  }
+
+  // Publish article: if Jang Mee (EIC) submits, status is 'approved'.
+  // If other members submit, status is 'pending' for EIC peer review.
+  async function publishArticle(fields, member) {
+    var isEic = !!member.isEic || !!member.canEditAcknowledgement || member.name === 'Jang Mee B. Lee';
+    var status = isEic ? 'approved' : 'pending';
+
+    var payload = {
+      category: fields.category,
+      category_name: fields.categoryName,
+      tag: fields.tag,
+      title: fields.title,
+      excerpt: fields.excerpt,
+      body: fields.body,
+      image: fields.image || null,
+      read_time: fields.readTime,
+      author_id: member.id,
+      author_name: member.name,
+      status: status
+    };
+
+    if (isEic) {
+      payload.reviewed_at = new Date().toISOString();
+      payload.reviewed_by = member.id;
+    }
+
+    var result = await client
+      .from('articles')
+      .insert(payload)
       .select()
       .single();
+
     if (result.error) return { ok: false, error: result.error.message };
-    return { ok: true, article: rowToArticle(result.data) };
+    return { ok: true, article: rowToArticle(result.data), status: status };
+  }
+
+  // Approve a pending article (EIC only)
+  async function approveArticleRemote(id, reviewerMember) {
+    var payload = {
+      status: 'approved',
+      reviewed_at: new Date().toISOString()
+    };
+    if (reviewerMember && reviewerMember.id) {
+      payload.reviewed_by = reviewerMember.id;
+    }
+
+    var result = await client
+      .from('articles')
+      .update(payload)
+      .eq('id', id)
+      .select();
+
+    if (result.error) return { ok: false, error: result.error.message };
+    if (!result.data || !result.data.length) {
+      return { ok: false, error: 'Could not approve article. Check permissions.' };
+    }
+    return { ok: true, article: rowToArticle(result.data[0]) };
   }
 
   async function updateArticleRemote(id, fields) {
@@ -142,12 +243,14 @@
     if (fields.body !== undefined) payload.body = fields.body;
     if (fields.image !== undefined) payload.image = fields.image;
     if (fields.readTime !== undefined) payload.read_time = fields.readTime;
+    if (fields.status !== undefined) payload.status = fields.status;
 
     var result = await client
       .from('articles')
       .update(payload)
       .eq('id', id)
       .select();
+
     if (result.error) return { ok: false, error: result.error.message };
 
     if (!result.data || !result.data.length) {
@@ -169,7 +272,6 @@
     return { ok: true };
   }
 
-
   async function uploadArticlePhoto(file) {
     var path = Date.now() + '-' + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
     var uploadResult = await client.storage.from('article-photos').upload(path, file);
@@ -187,12 +289,14 @@
     changeMemberPassword: changeMemberPassword,
     fetchArticlesForCategory: fetchArticlesForCategory,
     fetchArticleById: fetchArticleById,
+    fetchPendingArticles: fetchPendingArticles,
+    fetchMemberSubmissions: fetchMemberSubmissions,
+    fetchAllArticles: fetchAllArticles,
     publishArticle: publishArticle,
+    approveArticleRemote: approveArticleRemote,
     updateArticleRemote: updateArticleRemote,
     deleteArticleRemote: deleteArticleRemote,
     uploadArticlePhoto: uploadArticlePhoto
   };
 
 })(window);
-
-
