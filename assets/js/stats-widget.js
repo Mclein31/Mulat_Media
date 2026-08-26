@@ -178,11 +178,36 @@
         if (cachedLikes !== null) likesEl.textContent = formatNumber(parseInt(cachedLikes, 10));
       });
 
-    // 3. Toast Helper
+    // 3. Toast Helper with Smart Screen-Edge Alignment
     var toastTimeout = null;
+    function adjustToastPosition() {
+      if (!toastEl || !widget) return;
+      toastEl.classList.remove('toast-left', 'toast-right', 'toast-bottom');
+
+      var widgetRect = widget.getBoundingClientRect();
+      var margin = 12;
+
+      // If widget is close to top of viewport, show toast below
+      if (widgetRect.top < 50) {
+        toastEl.classList.add('toast-bottom');
+      }
+
+      // Check left/right screen boundaries
+      var widgetCenter = widgetRect.left + widgetRect.width / 2;
+      var toastWidth = toastEl.offsetWidth || 175;
+      var halfToast = toastWidth / 2;
+
+      if (widgetCenter - halfToast < margin) {
+        toastEl.classList.add('toast-left');
+      } else if (widgetCenter + halfToast > window.innerWidth - margin) {
+        toastEl.classList.add('toast-right');
+      }
+    }
+
     function showToast(msg) {
       if (!toastEl) return;
       toastEl.textContent = msg;
+      adjustToastPosition();
       toastEl.classList.add('toast-show');
       if (toastTimeout) clearTimeout(toastTimeout);
       toastTimeout = setTimeout(function () {

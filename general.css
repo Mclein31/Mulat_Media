@@ -520,8 +520,10 @@
     pointer-events:none;
     opacity:0;
     transition:opacity .2s ease, transform .2s ease;
-    box-shadow:0 4px 12px rgba(0,0,0,.18);
+    box-shadow:0 4px 14px rgba(0,0,0,.22);
     border:1px solid rgba(255,255,255,.08);
+    z-index:10002;
+    max-width:calc(100vw - 24px);
   }
   html[data-theme="dark"] .stats-toast{
     background:#252c38;
@@ -531,6 +533,45 @@
   .stats-toast.toast-show{
     opacity:1;
     transform:translateX(-50%) translateY(0);
+  }
+  /* Edge alignment variants to prevent screen overflow */
+  .stats-toast.toast-left{
+    left:0;
+    transform:translateX(0) translateY(3px);
+  }
+  .stats-toast.toast-left.toast-show{
+    transform:translateX(0) translateY(0);
+  }
+  .stats-toast.toast-right{
+    left:auto;
+    right:0;
+    transform:translateX(0) translateY(3px);
+  }
+  .stats-toast.toast-right.toast-show{
+    transform:translateX(0) translateY(0);
+  }
+  .stats-toast.toast-bottom{
+    bottom:auto;
+    top:calc(100% + 8px);
+    transform:translateX(-50%) translateY(-3px);
+  }
+  .stats-toast.toast-bottom.toast-show{
+    transform:translateX(-50%) translateY(0);
+  }
+  .stats-toast.toast-bottom.toast-left{
+    left:0;
+    transform:translateX(0) translateY(-3px);
+  }
+  .stats-toast.toast-bottom.toast-left.toast-show{
+    transform:translateX(0) translateY(0);
+  }
+  .stats-toast.toast-bottom.toast-right{
+    left:auto;
+    right:0;
+    transform:translateX(0) translateY(-3px);
+  }
+  .stats-toast.toast-bottom.toast-right.toast-show{
+    transform:translateX(0) translateY(0);
   }
   @media (max-width: 900px){
     .mulat-stats-widget .stats-tag{
