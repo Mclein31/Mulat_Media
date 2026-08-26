@@ -401,6 +401,7 @@
     updateArticleRemote: updateArticleRemote,
     deleteArticleRemote: deleteArticleRemote,
     uploadArticlePhoto: uploadArticlePhoto
+    
   };
 
 })(window);
