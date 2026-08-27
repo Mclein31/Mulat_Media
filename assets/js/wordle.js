@@ -693,8 +693,12 @@
   var keyboardEl = null;
   var toastContainer = null;
   var confettiCanvas = null;
+  var isInitialized = false;
 
   function createWordleUI() {
+    if (isInitialized) return;
+    isInitialized = true;
+
     // 1. Check/create launcher toggle button on top of theme toggle
     var toggleBtn = document.getElementById('wordleToggle');
     if (!toggleBtn) {
@@ -1407,8 +1411,10 @@
       if (e.key === 'Escape') {
         closeModal();
       } else if (e.key === 'Enter') {
+        e.preventDefault();
         handleKeyInput('ENTER');
       } else if (e.key === 'Backspace') {
+        e.preventDefault();
         handleKeyInput('BACKSPACE');
       } else if (/^[a-zA-Z]$/.test(e.key)) {
         handleKeyInput(e.key.toUpperCase());
@@ -1445,7 +1451,9 @@
   }
 
   function openModal() {
-    createWordleUI();
+    if (!isInitialized) {
+      createWordleUI();
+    }
     startNewGame(state.mode || 'daily');
     if (modalEl) modalEl.classList.add('wordle-active');
   }
