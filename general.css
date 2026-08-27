@@ -1163,6 +1163,36 @@
     background:#22c55e;
   }
 
+  /* Countdown to Next Daily Wordle */
+  .wordle-countdown-box{
+    background:var(--paper-dim);
+    border:1px solid var(--hairline);
+    border-radius:12px;
+    padding:12px 16px;
+    text-align:center;
+    margin-bottom:18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+  }
+  .wordle-countdown-label{
+    font-family:'DM Sans', sans-serif;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .wordle-countdown-time{
+    font-family:'League Spartan', 'DM Sans', sans-serif;
+    font-size:24px;
+    font-weight:800;
+    letter-spacing:.06em;
+    color:var(--stormy);
+    line-height:1.2;
+  }
+
   .wordle-subview-actions{
     margin-top:auto;
     display:flex;

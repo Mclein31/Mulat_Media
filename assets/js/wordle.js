@@ -22,7 +22,6 @@
   // --- STORAGE KEYS ---
   var STORAGE_STATS = 'mulat_wordle_stats_v1';
   var STORAGE_SETTINGS = 'mulat_wordle_settings_v1';
-  var STORAGE_PRACTICE_STATE = 'mulat_wordle_practice_state_v1';
   var DAILY_PREFIX = 'mulat_wordle_daily_';
 
   // --- TARGET WORDS LIST (Strictly 5-Letter English & Journalism/Media Vocabulary) ---
@@ -545,26 +544,14 @@
     var dateStr = year + '-' + month + '-' + day;
 
     return {
-      mode: 'daily',
       dayNumber: dayIndex + 1,
       dateStr: dateStr,
       targetWord: target
     };
   }
 
-  function getRandomPuzzle() {
-    var randIndex = Math.floor(Math.random() * TARGET_WORDS.length);
-    return {
-      mode: 'practice',
-      dayNumber: null,
-      dateStr: null,
-      targetWord: TARGET_WORDS[randIndex].toUpperCase()
-    };
-  }
-
   // --- GAME STATE ---
   var state = {
-    mode: 'daily', // 'daily' or 'practice'
     puzzle: null,
     guesses: [],
     currentGuess: '',
@@ -574,26 +561,14 @@
   };
 
   function loadGameState(puzzle) {
-    if (puzzle.mode === 'daily') {
-      var storageKey = DAILY_PREFIX + puzzle.dateStr;
-      try {
-        var saved = localStorage.getItem(storageKey);
-        if (saved) {
-          var parsed = JSON.parse(saved);
-          return parsed;
-        }
-      } catch (e) {}
-    } else {
-      try {
-        var savedPractice = localStorage.getItem(STORAGE_PRACTICE_STATE);
-        if (savedPractice) {
-          var parsedPractice = JSON.parse(savedPractice);
-          if (parsedPractice && parsedPractice.targetWord) {
-            return parsedPractice;
-          }
-        }
-      } catch (e) {}
-    }
+    var storageKey = DAILY_PREFIX + puzzle.dateStr;
+    try {
+      var saved = localStorage.getItem(storageKey);
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        return parsed;
+      }
+    } catch (e) {}
     return null;
   }
 
@@ -606,11 +581,7 @@
       currentRow: state.currentRow
     };
     try {
-      if (state.mode === 'daily') {
-        localStorage.setItem(DAILY_PREFIX + state.puzzle.dateStr, JSON.stringify(data));
-      } else {
-        localStorage.setItem(STORAGE_PRACTICE_STATE, JSON.stringify(data));
-      }
+      localStorage.setItem(DAILY_PREFIX + state.puzzle.dateStr, JSON.stringify(data));
     } catch (e) {}
   }
 
@@ -750,7 +721,7 @@
         '  <!-- SUBVIEW: HELP -->',
         '  <div class="wordle-subview" id="wordleHelpView">',
         '    <h3 class="wordle-subview-title">How to Play</h3>',
-        '    <p class="wordle-help-text">Guess the <strong>MULAT WORDLE</strong> in 6 tries. Each guess must be a valid 5-letter word.</p>',
+        '    <p class="wordle-help-text">Guess the <strong>DAILY MULAT WORDLE</strong> in 6 tries. A new puzzle is released every day at midnight!</p>',
         '    <p class="wordle-help-text">After each guess, the color of the tiles will change to show how close your guess was to the word.</p>',
         '    <div class="wordle-example-wrap">',
         '      <div class="wordle-example-row">',
@@ -805,8 +776,12 @@
         '    </div>',
         '    <div class="wordle-dist-title">Guess Distribution</div>',
         '    <div class="wordle-dist-chart" id="wordleDistChart"></div>',
+        '    <div class="wordle-countdown-box" id="wordleCountdownBox">',
+        '      <div class="wordle-countdown-label">Next Daily Wordle In</div>',
+        '      <div class="wordle-countdown-time" id="wordleCountdown">--:--:--</div>',
+        '    </div>',
         '    <div class="wordle-subview-actions">',
-        '      <button class="wordle-btn-secondary" id="wordleSwitchModeBtn">Practice Mode</button>',
+        '      <button class="wordle-btn-secondary" id="wordleStatsCloseBtn">View Board</button>',
         '      <button class="wordle-btn-primary" id="wordleShareBtn">',
         '        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">',
         '          <circle cx="18" cy="5" r="3"></circle>',
@@ -932,7 +907,12 @@
 
   // --- GAME ACTIONS & INPUTS ---
   function handleKeyInput(key) {
-    if (state.status !== 'IN_PROGRESS') return;
+    if (state.status !== 'IN_PROGRESS') {
+      if (key === 'ENTER' || key === 'BACKSPACE' || /^[A-Z]$/.test(key)) {
+        showToast("You've completed today's Wordle! Next puzzle arrives at midnight 🌙", 2200);
+      }
+      return;
+    }
 
     if (key === 'BACKSPACE' || key === 'BACK') {
       if (state.currentGuess.length > 0) {
@@ -1250,24 +1230,44 @@
       chartEl.appendChild(row);
     }
 
-    // Switch mode button text
-    var switchBtn = document.getElementById('wordleSwitchModeBtn');
-    if (switchBtn) {
-      if (state.mode === 'daily') {
-        switchBtn.textContent = state.status !== 'IN_PROGRESS' ? 'Play Practice Game' : 'Switch to Practice';
-      } else {
-        switchBtn.textContent = 'Play Daily Puzzle';
-      }
+    startCountdownTimer();
+  }
+
+  // --- COUNTDOWN TIMER TO NEXT DAILY WORDLE ---
+  var countdownInterval = null;
+  function startCountdownTimer() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    updateCountdownText();
+    countdownInterval = setInterval(updateCountdownText, 1000);
+  }
+
+  function updateCountdownText() {
+    var countdownEl = document.getElementById('wordleCountdown');
+    if (!countdownEl) return;
+    var now = new Date();
+    var tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    var diff = Math.max(0, tomorrow.getTime() - now.getTime());
+
+    if (diff <= 0) {
+      // Midnight crossed! Auto load new daily puzzle
+      if (countdownInterval) clearInterval(countdownInterval);
+      startNewGame();
+      return;
     }
+
+    var hours = Math.floor(diff / (1000 * 60 * 60));
+    var mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    var secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    countdownEl.textContent = pad(hours) + ':' + pad(mins) + ':' + pad(secs);
   }
 
   // --- SHARE RESULT TO CLIPBOARD ---
   function shareResult() {
     if (state.guesses.length === 0) return;
 
-    var puzzleTitle = state.mode === 'daily'
-      ? 'Mulat Wordle #' + state.puzzle.dayNumber
-      : 'Mulat Wordle (Practice)';
+    var puzzleTitle = 'Mulat Wordle #' + state.puzzle.dayNumber;
     var scoreStr = state.status === 'WON' ? state.currentRow + '/6' : 'X/6';
 
     var rows = [puzzleTitle + ' ' + scoreStr, ''];
@@ -1314,22 +1314,19 @@
     document.body.removeChild(ta);
   }
 
-  // --- GAME INITIALIZATION & MODE SWITCHING ---
-  function startNewGame(mode) {
-    mode = mode || 'daily';
-    state.mode = mode;
-
-    var puzzle = (mode === 'daily') ? getDailyPuzzle() : getRandomPuzzle();
+  // --- GAME INITIALIZATION (DAILY ONLY) ---
+  function startNewGame() {
+    var puzzle = getDailyPuzzle();
     state.puzzle = puzzle;
     state.currentGuess = '';
 
     var badge = document.getElementById('wordleModeBadge');
     var subtitle = document.getElementById('wordleSubtitle');
     if (badge) {
-      badge.textContent = mode === 'daily' ? 'Daily #' + puzzle.dayNumber : 'Practice';
+      badge.textContent = 'Daily #' + puzzle.dayNumber;
     }
     if (subtitle) {
-      subtitle.textContent = mode === 'daily' ? puzzle.dateStr : 'Unlimited Practice';
+      subtitle.textContent = puzzle.dateStr + ' • 1 Play per Day';
     }
 
     var saved = loadGameState(puzzle);
@@ -1353,7 +1350,7 @@
     if (state.status !== 'IN_PROGRESS') {
       setTimeout(function () {
         openStatsView();
-      }, 500);
+      }, 400);
     }
   }
 
@@ -1386,24 +1383,17 @@
       if (e.target === modalEl) closeModal();
     });
 
-    // Header buttons
+    // Header buttons & subview actions
     document.getElementById('wordleHelpBtn').addEventListener('click', openHelpView);
     document.getElementById('wordleHelpCloseBtn').addEventListener('click', closeSubviews);
     document.getElementById('wordleStatsBtn').addEventListener('click', openStatsView);
+    document.getElementById('wordleStatsCloseBtn').addEventListener('click', closeSubviews);
     document.getElementById('wordleShareBtn').addEventListener('click', shareResult);
 
     document.getElementById('wordleMuteBtn').addEventListener('click', function () {
       settings.muted = !settings.muted;
       saveSettings();
       updateMuteIcon();
-    });
-
-    document.getElementById('wordleSwitchModeBtn').addEventListener('click', function () {
-      if (state.mode === 'daily') {
-        startNewGame('practice');
-      } else {
-        startNewGame('daily');
-      }
     });
 
     updateMuteIcon();
@@ -1413,12 +1403,16 @@
     if (!isInitialized) {
       createWordleUI();
     }
-    startNewGame(state.mode || 'daily');
+    startNewGame();
     if (modalEl) modalEl.classList.add('wordle-active');
   }
 
   function closeModal() {
     if (modalEl) modalEl.classList.remove('wordle-active');
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
     closeSubviews();
   }
 
