@@ -1,15 +1,5 @@
 (function (global) {
 
-  var MEMBERS = [
-    'Jang Mee B. Lee',
-    'Maxene Q. Baggao',
-    'Kaizen C. Rodriguez',
-    'Kyla Rex Jaime',
-    'Macy Ollagangi',
-    'Mharielle B. Binondo',
-    'Zildjian Faith F. Toledo'
-  ];
-
   var CATEGORIES = [
     { slug: 'opinion', name: 'Opinion', desc: 'Editorials, columns, and reader perspectives.' },
     { slug: 'news-current-affairs', name: 'News and Current Affairs', desc: 'Breaking news and ongoing coverage.' },
@@ -90,37 +80,29 @@
     window.location.href = targetPath;
   }
 
-  // Jang Mee B. Lee is the Editor-in-Chief (EIC)
+  // Compatibility name for editorial management in ordinary sections.
   function isJangMee() {
-    if (!cachedMember) return false;
-    return !!cachedMember.isEic || !!cachedMember.canEditAcknowledgement || cachedMember.name === 'Jang Mee B. Lee';
+    return !!cachedMember && (!!cachedMember.isEic || !!cachedMember.isAdmin);
   }
 
-  // Jang Mee can edit ALL articles. Members can ONLY edit their own work.
+  function canEditAcknowledgement() {
+    return !!cachedMember && !!cachedMember.isEic && !!cachedMember.canEditAcknowledgement;
+  }
+
   function canEditArticle(article) {
-    if (!cachedMember) return false;
+    if (!cachedMember || !article) return false;
+    if (article.category === 'acknowledgement') return !!cachedMember.isEic;
     if (isJangMee()) return true;
-    if (!article) return false;
-    if (article.category === 'acknowledgement') return false;
-    if (article.authorId && cachedMember.id && article.authorId === cachedMember.id) return true;
-    if (article.author && cachedMember.name && article.author.trim().toLowerCase() === cachedMember.name.trim().toLowerCase()) return true;
-    return false;
+    return !!article.authorId && !!cachedMember.id && article.authorId === cachedMember.id;
   }
 
-  // Jang Mee can delete ALL articles. Members can ONLY delete their own work.
   function canDeleteArticle(article) {
-    if (!cachedMember) return false;
-    if (isJangMee()) return true;
-    if (!article) return false;
-    if (article.category === 'acknowledgement') return false;
-    if (article.authorId && cachedMember.id && article.authorId === cachedMember.id) return true;
-    if (article.author && cachedMember.name && article.author.trim().toLowerCase() === cachedMember.name.trim().toLowerCase()) return true;
-    return false;
+    return canEditArticle(article);
   }
 
-  // Only Jang Mee (EIC) can approve pending articles
   function canApproveArticle(article) {
     if (!cachedMember) return false;
+    if (article && article.category === 'acknowledgement' && !cachedMember.isEic) return false;
     return isJangMee() && (!article || article.status === 'pending');
   }
 
@@ -191,7 +173,7 @@
     if (!hasSupabase()) return { ok: false, error: 'Not connected to the database.' };
     await ensureMember();
     var member = getMember();
-    if (!isJangMee()) return { ok: false, error: 'Only Jang Mee (Editor-in-Chief) can approve articles.' };
+    if (!isJangMee()) return { ok: false, error: 'Only the editor-in-chief or developer admin can approve articles.' };
     try {
       return await global.MulatSupabase.approveArticleRemote(id, member);
     } catch (e) {
@@ -209,7 +191,7 @@
     options = options || {};
     var addPage = options.addPage || 'submit-article.html';
     var addLabel = options.addLabel || '+ Add Article';
-    var canAdd = options.canAdd !== false;
+    var canAdd = options.canAdd !== false && (addPage !== 'submit-acknowledgement.html' || canEditAcknowledgement());
 
     if (member) {
       var eic = isJangMee();
@@ -223,12 +205,13 @@
         (eic ? ' <span class="badge-count" id="headerPendingCount" style="display:none;"></span>' : '') + 
         '</a>';
 
-      var roleBadge = eic ? '<span class="role-pill">EIC</span>' : '';
+      var roleBadge = member.isAdmin ? '<span class="role-pill">Developer Admin</span>' : (member.isEic ? '<span class="role-pill">EIC</span>' : '');
 
       el.innerHTML =
         '<span class="member-badge">Signed in as <strong>' + escapeHtml(member.name) + '</strong> ' + roleBadge + '</span>' +
         queueHtml +
         addHtml +
+        '<a href="' + p + 'login.html" class="btn-sm">Change password</a>' +
         '<a href="#" class="logout-link" id="newsroomLogoutLink">Log out</a>';
 
       var logoutLink = document.getElementById('newsroomLogoutLink');
@@ -260,64 +243,82 @@
     var form = document.getElementById('loginForm');
     if (!form) return;
     var p = prefix();
-    var select = document.getElementById('memberSelect');
+    var emailInput = document.getElementById('memberEmail');
     var passwordInput = document.getElementById('accessCode');
+    var verify = document.getElementById('verifyEmailForm');
     var msg = document.getElementById('loginMsg');
-
+    var verificationEmail = '';
     var redirectParam = new URLSearchParams(window.location.search).get('redirect');
-    if (redirectParam && (/^https?:\/\//i.test(redirectParam) || redirectParam.indexOf('//') === 0)) {
-      redirectParam = null;
+    var redirectTarget = new URL(p + 'articles.html', window.location.href);
+    if (redirectParam) {
+      try {
+        var candidate = new URL(p + redirectParam, window.location.href);
+        if (candidate.origin === window.location.origin && /^https?:$/.test(candidate.protocol)) redirectTarget = candidate;
+        else redirectParam = null;
+      } catch (e) { redirectParam = null; }
     }
-    var redirectTarget = p + (redirectParam || 'articles.html');
-
-    MEMBERS.forEach(function (name) {
-      var opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name + (name === 'Jang Mee B. Lee' ? ' (Editor-in-Chief)' : '');
-      select.appendChild(opt);
+    function showForm(target) {
+      form.hidden = target !== form;
+      verify.hidden = target !== verify;
+    }
+    function busy(target, value) {
+      Array.prototype.forEach.call(target.querySelectorAll('button'), function (button) { button.disabled = value; });
+      target.setAttribute('aria-busy', String(value));
+    }
+    async function run(target, action) {
+      busy(target, true);
+      try { await action(); }
+      catch (error) { showMsg(msg, error.message || 'Please try again.', 'error'); }
+      finally { busy(target, false); }
+    }
+    async function startVerification(email) {
+      verificationEmail = email.trim().toLowerCase();
+      showForm(verify);
+      document.getElementById('verificationHint').textContent = 'Enter the verification code sent to ' + verificationEmail + '.';
+      var sent = await global.MulatSupabase.sendVerificationCode(verificationEmail);
+      showMsg(msg, sent.ok ? 'Check your email for a verification code.' : sent.error, sent.ok ? 'success' : 'error');
+    }
+    document.getElementById('verificationBack').addEventListener('click', function () {
+      showForm(form);
+      showMsg(msg, '', '');
     });
-
+    if (!hasSupabase()) {
+      showMsg(msg, 'Sign-in is not connected yet. Please try again later.', 'error');
+      return;
+    }
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      run(form, async function () {
+        showMsg(msg, 'Signing in…', 'success');
+        var result = await global.MulatSupabase.signInMember(emailInput.value, passwordInput.value);
+        if (result.needsVerification) { await startVerification(result.email || emailInput.value); return; }
+        if (!result.ok) { showMsg(msg, result.error || 'Could not sign in.', 'error'); return; }
+        passwordInput.value = '';
+        if (redirectParam) { window.location.href = redirectTarget.href; return; }
+        await refreshMember();
+        if (getMember()) { showMsg(msg, '', ''); initAccountPanel(p); }
+        else showMsg(msg, 'Could not load your account. Please try signing in again.', 'error');
+      });
+    });
+    verify.addEventListener('submit', function (event) {
+      event.preventDefault();
+      run(verify, async function () {
+        var result = await global.MulatSupabase.verifyMemberEmail(verificationEmail, document.getElementById('verificationCode').value.trim());
+        if (!result.ok) { showMsg(msg, result.error || 'Could not verify this code.', 'error'); return; }
+        verify.reset();
+        emailInput.value = verificationEmail;
+        showForm(form);
+        showMsg(msg, 'Email verified. Sign in with your email and password.', 'success');
+      });
+    });
+    document.getElementById('resendVerification').addEventListener('click', function () {
+      run(verify, async function () { await startVerification(verificationEmail); });
+    });
     await ensureMember();
     if (getMember()) {
-      if (redirectParam) {
-        window.location.href = redirectTarget;
-        return;
-      }
+      if (redirectParam) { window.location.href = redirectTarget.href; return; }
       initAccountPanel(p);
-      return;
     }
-
-    if (!hasSupabase()) {
-      showMsg(msg, 'Sign-in isn\'t connected yet — check the Supabase setup in supabase-client.js.', 'error');
-      return;
-    }
-
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var name = select.value;
-      var password = (passwordInput.value || '').trim();
-
-      if (!name) {
-        showMsg(msg, 'Please select your name.', 'error');
-        return;
-      }
-      if (!password) {
-        showMsg(msg, 'Please enter your password.', 'error');
-        return;
-      }
-
-      showMsg(msg, 'Signing in…', 'success');
-      var result = await global.MulatSupabase.signInMember(name, password);
-      if (!result.ok) {
-        showMsg(msg, result.error || 'That password is incorrect. Check with your editor.', 'error');
-        return;
-      }
-
-      showMsg(msg, 'Welcome back, ' + name + '. Redirecting…', 'success');
-      setTimeout(function () {
-        window.location.href = redirectTarget;
-      }, 500);
-    });
   }
 
   /* ---------- account panel (change password / log out) ---------- */
@@ -325,13 +326,19 @@
     var loginForm = document.getElementById('loginForm');
     var panel = document.getElementById('accountPanel');
     if (!panel) return;
+    var authForms = document.getElementById('authForms');
+    if (authForms) authForms.hidden = true;
     if (loginForm) loginForm.style.display = 'none';
     panel.style.display = '';
+    var title = document.getElementById('authCardTitle');
+    if (title) { title.textContent = 'Change Password'; title.focus(); }
+    var intro = document.getElementById('authIntro');
+    if (intro) intro.textContent = 'Set a password that only you know. Enter your current password and choose a new one with at least 8 characters.';
 
     var member = getMember();
     var signedInAs = document.getElementById('accountSignedInAs');
     if (signedInAs && member) {
-      var roleText = isJangMee() ? ' (Editor-in-Chief)' : '';
+      var roleText = member.isAdmin ? ' (Developer Admin)' : (member.isEic ? ' (Editor-in-Chief)' : '');
       signedInAs.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>' + roleText + '.';
     }
 
@@ -344,6 +351,7 @@
     }
 
     var form = document.getElementById('changePasswordForm');
+    var currentPasswordInput = document.getElementById('currentPassword');
     var newPasswordInput = document.getElementById('newPassword');
     var confirmPasswordInput = document.getElementById('confirmPassword');
     var msg = document.getElementById('accountMsg');
@@ -354,8 +362,8 @@
       var newPassword = newPasswordInput.value || '';
       var confirmPassword = confirmPasswordInput.value || '';
 
-      if (newPassword.length < 6) {
-        showMsg(msg, 'Password must be at least 6 characters.', 'error');
+      if (newPassword.length < 8) {
+        showMsg(msg, 'Password must be at least 8 characters.', 'error');
         return;
       }
       if (newPassword !== confirmPassword) {
@@ -367,15 +375,27 @@
         return;
       }
 
+      var submit = form.querySelector('button[type="submit"]');
+      if (submit.disabled) return;
+      submit.disabled = true;
+      submit.textContent = 'Updating…';
+      form.setAttribute('aria-busy', 'true');
       showMsg(msg, 'Updating password…', 'success');
-      var result = await global.MulatSupabase.changeMemberPassword(newPassword);
-      if (!result.ok) {
-        showMsg(msg, result.error || 'Could not update your password.', 'error');
-        return;
+      try {
+        var result = await global.MulatSupabase.changeMemberPassword(newPassword, currentPasswordInput.value);
+        if (!result.ok) {
+          showMsg(msg, result.error || 'Could not update your password.', 'error');
+          return;
+        }
+        form.reset();
+        showMsg(msg, 'Password changed. Use your new password the next time you sign in.', 'success');
+      } catch (error) {
+        showMsg(msg, error.message || 'Could not update your password. Please try again.', 'error');
+      } finally {
+        submit.disabled = false;
+        submit.textContent = 'Change Password';
+        form.setAttribute('aria-busy', 'false');
       }
-
-      form.reset();
-      showMsg(msg, 'Password updated.', 'success');
     });
   }
 
@@ -471,7 +491,7 @@
     var eic = isJangMee();
     var who = document.getElementById('submitWho');
     if (who) {
-      var roleText = eic ? ' (Editor-in-Chief)' : '';
+      var roleText = member.isAdmin ? ' (Developer Admin)' : (member.isEic ? ' (Editor-in-Chief)' : '');
       who.innerHTML = 'Posting as <strong>' + escapeHtml(member.name) + '</strong>' + roleText;
     }
     var logout = document.getElementById('submitLogout');
@@ -839,7 +859,7 @@
       fixedCategory: 'acknowledgement',
       fixedCategoryName: 'Acknowledgement',
       fixedCategoryDesc: 'Reminders and announcements from the newsroom.',
-      requirePermission: isJangMee,
+      requirePermission: canEditAcknowledgement,
       deniedMessage: 'Only Jang Mee B. Lee (Editor-in-Chief) has permission to publish to Acknowledgement.',
       redirectPage: 'acknowledgement.html',
       selfPage: 'submit-acknowledgement.html',
@@ -885,13 +905,9 @@
       }
       var category = el.getAttribute('data-category') || '';
       var authorId = el.getAttribute('data-author-id') || '';
-      var authorName = el.getAttribute('data-author-name') || '';
-
-      var isOwner = (authorId && member.id && authorId === member.id) ||
-                    (authorName && authorName.trim().toLowerCase() === member.name.trim().toLowerCase());
-
-      var canEdit = eic || (isOwner && category !== 'acknowledgement');
-      var canDelete = eic || (isOwner && category !== 'acknowledgement');
+      var article = { category: category, authorId: authorId };
+      var canEdit = canEditArticle(article);
+      var canDelete = canDeleteArticle(article);
 
       var editLink = el.querySelector('[data-action="edit"]');
       var deleteBtn = el.querySelector('[data-action="delete"]');
@@ -1092,7 +1108,7 @@
     var emptyEl = document.getElementById('queueEmpty');
 
     if (whoEl) {
-      var roleText = eic ? ' (Editor-in-Chief)' : '';
+      var roleText = member.isAdmin ? ' (Developer Admin)' : (member.isEic ? ' (Editor-in-Chief)' : '');
       whoEl.innerHTML = 'Signed in as <strong>' + escapeHtml(member.name) + '</strong>' + roleText;
     }
 
@@ -1162,7 +1178,7 @@
           ? '<div class="queue-card-thumb"><img src="' + escapeHtml(a.image) + '" alt=""></div>'
           : '<div class="queue-card-thumb placeholder"><span>' + escapeHtml(a.categoryName) + '</span></div>';
 
-        var approveBtnHtml = (eic && isPending)
+        var approveBtnHtml = canApproveArticle(a)
           ? '<button type="button" class="btn-approve" data-approve-id="' + escapeHtml(String(a.id)) + '">&#10003; Approve &amp; Publish</button>'
           : '';
 
@@ -1243,9 +1259,9 @@
   }
 
   global.MulatNewsroom = {
-    MEMBERS: MEMBERS,
     CATEGORIES: CATEGORIES,
     isJangMee: isJangMee,
+    canEditAcknowledgement: canEditAcknowledgement,
     canManageArticle: canManageArticle,
     canEditArticle: canEditArticle,
     canDeleteArticle: canDeleteArticle,

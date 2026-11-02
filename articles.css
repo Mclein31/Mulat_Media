@@ -615,6 +615,7 @@
     margin-bottom:8px;
   }
   .form-field input[type="text"],
+  .form-field input[type="email"],
   .form-field input[type="password"],
   .form-field input[type="number"],
   .form-field input[type="url"],

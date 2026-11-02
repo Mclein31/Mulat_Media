@@ -68,50 +68,64 @@
 <section class="page-hero">
   <span class="eyebrow">Members Only</span>
   <h1>Newsroom Login</h1>
-  <p class="statement">"Sign in with your name and password to publish articles to the site."</p>
+  <p class="statement">Sign in with your approved staff email and password.</p>
 </section>
 
 <!-- LOGIN FORM -->
 <section class="auth-section">
   <div class="wrap">
     <div class="auth-card">
-      <h2>Member Sign In</h2>
-      <p class="sub">This is a members-only area for MULAT MEDIA writers and editors. Not a member? <a href="members.html" class="read-more">See the full directory →</a></p>
+      <h2 id="authCardTitle" tabindex="-1">Member Sign In</h2>
+      <p class="sub" id="authIntro">Your staff account is already set up. Use the password provided to you, then choose Change Password to set your own. Only approved staff emails can access the newsroom.</p>
 
-      <div class="form-msg" id="loginMsg"></div>
+      <div class="form-msg" id="loginMsg" role="status" aria-live="polite"></div>
 
-      <form id="loginForm" novalidate>
-        <div class="form-field">
-          <label for="memberSelect">Your Name</label>
-          <select id="memberSelect" required>
-            <option value="">Select your name…</option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label for="accessCode">Password</label>
-          <input type="password" id="accessCode" placeholder="Enter your password" required>
-          <div class="hint">Ask your editor-in-chief if you don't know your password.</div>
-        </div>
-        <button type="submit" class="btn auth-submit">Sign In</button>
-      </form>
+      <div id="authForms">
+        <form id="loginForm">
+          <div class="form-field">
+            <label for="memberEmail">Staff email</label>
+            <input type="email" id="memberEmail" autocomplete="username" required>
+          </div>
+          <div class="form-field">
+            <label for="accessCode">Password</label>
+            <input type="password" id="accessCode" autocomplete="current-password" required>
+          </div>
+          <button type="submit" class="btn auth-submit">Sign In</button>
+        </form>
+        <form id="verifyEmailForm" hidden>
+          <p class="sub" id="verificationHint">Enter the verification code sent to your staff email.</p>
+          <div class="form-field">
+            <label for="verificationCode">Email verification code</label>
+            <input type="text" id="verificationCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+          </div>
+          <button type="submit" class="btn auth-submit">Verify Email</button>
+          <p class="sub"><button type="button" id="resendVerification" class="read-more">Send another code</button></p>
+          <p class="sub"><button type="button" id="verificationBack" class="read-more">Back to sign in</button></p>
+        </form>
+      </div>
 
       <div id="accountPanel" style="display:none;">
         <p class="sub" id="accountSignedInAs"></p>
 
-        <div class="form-msg" id="accountMsg"></div>
+        <div class="form-msg" id="accountMsg" role="status" aria-live="polite"></div>
 
-        <form id="changePasswordForm" novalidate>
+        <form id="changePasswordForm">
+          <div class="form-field">
+            <label for="currentPassword">Current Password</label>
+            <input type="password" id="currentPassword" autocomplete="current-password" required>
+          </div>
           <div class="form-field">
             <label for="newPassword">New Password</label>
-            <input type="password" id="newPassword" placeholder="At least 6 characters" required minlength="6">
+            <input type="password" id="newPassword" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8">
           </div>
           <div class="form-field">
             <label for="confirmPassword">Confirm New Password</label>
-            <input type="password" id="confirmPassword" placeholder="Re-enter new password" required minlength="6">
+            <input type="password" id="confirmPassword" autocomplete="new-password" placeholder="Re-enter new password" required minlength="8">
           </div>
           <button type="submit" class="btn auth-submit">Change Password</button>
         </form>
 
+        <p class="sub"><a href="articles.html" class="read-more">Back to newsroom →</a></p>
         <p class="sub"><a href="#" id="accountLogoutLink" class="read-more">Log out</a></p>
       </div>
     </div>
@@ -249,7 +263,6 @@
     }
   })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="assets/js/supabase-client.js"></script>
 <script src="assets/js/newsroom.js"></script>
 <script>

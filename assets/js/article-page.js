@@ -55,10 +55,7 @@
       return;
     }
 
-    var isAuthor = member && (
-      (article.authorId && member.id && article.authorId === member.id) ||
-      (article.author && article.author.trim().toLowerCase() === member.name.trim().toLowerCase())
-    );
+    var isAuthor = member && article.authorId && article.authorId === member.id;
 
     if (isPending && !eic && !isAuthor) {
       showNotFound('This article is currently under peer review and is only visible to the author and Editor-in-Chief.');
@@ -103,11 +100,11 @@
         banner.id = 'articleReviewBanner';
         banner.className = 'review-banner';
 
-        if (eic) {
+        if (global.MulatNewsroom.canApproveArticle(article)) {
           banner.innerHTML =
             '<div class="review-banner-content">' +
-            '  <div class="review-banner-badge">&#9203; AWAITING YOUR VERIFICATION (EIC)</div>' +
-            '  <p class="review-banner-text">This story was submitted by <strong>' + escapeHtml(article.author || 'a newsroom member') + '</strong> for peer review. As Editor-in-Chief, you can edit it or approve it to publish immediately to the website.</p>' +
+            '  <div class="review-banner-badge">&#9203; AWAITING YOUR REVIEW</div>' +
+            '  <p class="review-banner-text">This story was submitted by <strong>' + escapeHtml(article.author || 'a newsroom member') + '</strong> for peer review. You can edit it or approve it to publish immediately to the website.</p>' +
             '  <div class="review-banner-actions">' +
             '    <button type="button" class="btn-approve" id="bannerApproveBtn">&#10003; Approve &amp; Publish</button>' +
             '    <a href="' + global.MulatNewsroom.editPageFor(article.category) + '?edit=' + encodeURIComponent(article.id) + '" class="btn-sm">Edit Story</a>' +

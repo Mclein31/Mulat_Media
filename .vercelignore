@@ -1,0 +1,7 @@
+.env*
+.brain/
+MulatMedia/
+database/
+.git/
+tests/
+.migration-backups/

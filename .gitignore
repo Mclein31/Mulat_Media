@@ -6,3 +6,16 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Local backend credentials and database exports
+.env
+.env.*
+!.env.example
+*.dump
+*.bak
+node_modules/
+.vercel/
+public/
+.migration-backups/
+.vercel
+.env*

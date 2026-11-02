@@ -50,3 +50,24 @@ last_updated: 2026-08-28
 ## 🎮 Wordle Engine Architecture (`wordle.js`)
 - **Daily Mode**: Selects target word from a curated word list using a deterministic hash of the current calendar date (`YYYY-MM-DD`). Enforces one game per day with a live midnight countdown timer.
 - **Practice Mode**: Generates random 5-letter words with unlimited replays for casual student engagement.
+
+## Migration implementation — 2026-11-02 (not deployed)
+
+The replacement path is browser → Vercel `/api/newsroom` → Neon Postgres, with
+Neon Auth verified JWTs for staff requests and R2 signed uploads for photos.
+`lib/staff.cjs` owns staff/EIC/developer roles; neither display names nor browser
+payloads authorize writes. The existing `MulatSupabase` global and client filename
+remain compatibility aliases only. `npm run build` creates the browser bundle
+and a `public/` static output that excludes credentials and server files.
+Production remains on the architecture above until migration/cutover. See
+`docs/BACKEND_MIGRATION.md` for status, identity mapping, and required rollout checks.
+
+## Production media and preview — 2026-11-02
+
+R2 images are now served through GET/HEAD /api/media/article-photos/... with
+streaming, CDN caching, ETags and strict image/path/size checks. Uploads still
+use short-lived R2 signed PUT URLs and return a relative /api/media path. This
+removes the application dependency on r2.dev and avoids a separate media domain.
+Existing Vercel project has production+preview backend settings; protected
+preview deployed and verified. Production sender setup deferred; public site
+not promoted. See docs/LIVE_ROLLOUT.md.

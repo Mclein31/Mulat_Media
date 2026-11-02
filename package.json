@@ -1,0 +1,27 @@
+{
+  "name": "mulat-media",
+  "private": true,
+  "scripts": {
+    "build": "esbuild assets/js/backend-client.source.js --bundle --format=iife --target=es2020 --outfile=assets/js/supabase-client.js --minify --supported:template-literal=false && node scripts/build-site.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "lint": "node scripts/check-syntax.cjs"
+  },
+  "dependencies": {
+    "@neondatabase/auth": "0.6.0-beta",
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/s3-request-presigner": "3.1161.0",
+    "@vercel/functions": "3.10.5",
+    "jose": "6.2.15",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "overrides": {
+    "zod": "4.6.7",
+    "better-auth": "1.7.15"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
