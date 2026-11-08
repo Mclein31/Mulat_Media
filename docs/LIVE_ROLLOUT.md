@@ -73,3 +73,12 @@ When the mailbox owner is available, use a dedicated Gmail app password with
 2-Step Verification, configure Neon custom SMTP, and verify a fresh OTP before
 considering the sender switch complete. Never request the mailbox’s primary
 password, recovery codes, or unrelated account access.
+
+## Production confirmed — 2026-11-02
+
+User pushed commit 5c67cbb to main. Production deployment
+dpl_DX82gz8xYQvTXsLgpBUCnSWKynSC is READY and aliased to
+https://mulat-media.vercel.app. Read-only smoke checks: login 200, config 200
+with /api/auth, articles 200 JSON, unsigned member 401, get-session 200/null.
+Auth/media/newsroom server functions built successfully. Shared sender retained
+by user choice; custom publication Gmail SMTP remains the only deferred setup.

@@ -8,66 +8,73 @@
   "collapse-color-groups": false,
   "colorGroups": [
     {
+      "query": "file:\"MulatMedia\"",
+      "color": {
+        "a": 1,
+        "rgb": 11356447
+      }
+    },
+    {
       "query": "path:\"00 - Dashboard\" OR path:\"01 - Vision\"",
       "color": {
         "a": 1,
-        "rgb": 11032055
+        "rgb": 14244902
       }
     },
     {
       "query": "path:\"02 - Problem Space\" OR path:\"03 - Research\"",
       "color": {
         "a": 1,
-        "rgb": 959977
+        "rgb": 14235686
       }
     },
     {
       "query": "path:\"04 - Users\" OR path:\"05 - Requirements\"",
       "color": {
         "a": 1,
-        "rgb": 16486972
+        "rgb": 14252582
       }
     },
     {
       "query": "path:\"06 - Features\" OR path:\"07 - Product Design\"",
       "color": {
         "a": 1,
-        "rgb": 1096065
+        "rgb": 14844762
       }
     },
     {
       "query": "path:\"08 - Technical Architecture\" OR path:\"09 - Database\"",
       "color": {
         "a": 1,
-        "rgb": 6514417
+        "rgb": 14837850
       }
     },
     {
-      "query": "path:\"10 - Security & Privacy\" OR path:\"14 - Problems\"",
+      "query": "path:\"10 - Security\" OR path:\"14 - Problems\"",
       "color": {
         "a": 1,
-        "rgb": 15680580
+        "rgb": 14850650
       }
     },
     {
       "query": "path:\"11 - Development\" OR path:\"12 - Testing\"",
       "color": {
         "a": 1,
-        "rgb": 1357990
+        "rgb": 15377542
       }
     },
     {
       "query": "path:\"13 - Decisions\"",
       "color": {
         "a": 1,
-        "rgb": 15485081
+        "rgb": 15372422
       }
     },
     {
-      "query": "path:\"15 - Ideas\" OR path:\"16 - Resources\" OR path:\"17 - Personal\"",
+      "query": "path:\"15 - Ideas\" OR path:\"16 - Resources\" OR path:\"17 - Personal\" OR path:\"99 - Archive\"",
       "color": {
         "a": 1,
-        "rgb": 16096779
+        "rgb": 15381638
       }
     }
   ],

@@ -71,3 +71,11 @@ last_updated: 2026-08-28
 
 ## ⚠️ Known Limitations
 - Supabase free tier storage bucket limits must be monitored for high-resolution article photo uploads.
+
+## Production rollout — 2026-11-02
+
+User pushed migration commit 5c67cbb to main. Production deployment
+dpl_DX82gz8xYQvTXsLgpBUCnSWKynSC is READY at mulat-media.vercel.app.
+Public login/config/articles and auth-session routes pass smoke checks; unsigned
+member access returns 401. Neon shared sender retained by user choice. Only
+custom publication Gmail SMTP setup is deferred until the mailbox owner is available.
