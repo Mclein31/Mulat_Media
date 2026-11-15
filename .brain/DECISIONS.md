@@ -7,10 +7,12 @@ tags:
   - web
   - cms
   - supabase
-last_updated: 2026-08-28
+last_updated: 2026-11-15
 ---
 
 # ⚖️ Mulat_Media_Website — Technical Decisions
+
+> Date note: the first two entries are dated 2025-01 and 2025-02, but the git history starts on 2026-08-15, Supabase was added on 2026-08-20 and Wordle on 2026-08-27. The dates are kept as recorded; they are probably not the real decision dates.
 
 ## 2025-01-20 — Supabase BaaS for Publication CMS
 
@@ -26,6 +28,8 @@ Provided instant Row Level Security (RLS), managed user authentication for stude
 
 ### Consequences
 Fast development velocity and high reliability on Vercel + Supabase infrastructure.
+
+> **Status: Superseded** by "2026-11-02 — Neon Auth with verified staff allowlist and R2" below. Production moved off Supabase in commit `5c67cbb` (2026-11-02).
 
 ---
 
@@ -43,6 +47,10 @@ Drives recurring daily traffic from students and campus readers, boosting overal
 ### Consequences
 Significant increase in daily active readers and positive reader feedback.
 
+> Note (2026-11-15): no analytics in the repo back this claim; the only metric is the Abacus visit/like counter.
+
+---
+
 ## 2026-11-02 — Neon Auth with verified staff allowlist and R2
 
 User chose Neon Postgres and Neon Auth, with Cloudflare R2 for media. Dedicated
@@ -57,6 +65,10 @@ newsroom access. No existing source accounts have been deleted remotely.
 Implementation and verification are in progress; live data/media import and
 production cutover await source/R2 credentials. See `docs/BACKEND_MIGRATION.md`.
 
+> Status (2026-11-15): implemented and live in production since 2026-11-02 (`5c67cbb`). The email-signup part was replaced the same day by the preprovisioned-accounts decision below.
+
+---
+
 ## 2026-11-02 — Preprovisioned staff accounts and acknowledgement ownership
 
 User replaced email signup with eight preprovisioned Neon Auth accounts and
@@ -65,3 +77,5 @@ verification and allow current-password-authenticated password changes. Never
 store initial passwords in source or Brain files. Jang Mee alone controls
 acknowledgement content; developer admin retains other-section management; six
 writers manage only their own work. Existing deployment review hold still applies.
+
+> Status (2026-11-15): the review hold was lifted when the user pushed `5c67cbb` to `main` on 2026-11-02. The user also chose to launch with Neon's shared email sender and defer custom SMTP.

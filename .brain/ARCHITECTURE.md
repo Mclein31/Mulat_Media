@@ -6,68 +6,61 @@ tags:
   - architecture
   - web
   - cms
-  - supabase
-last_updated: 2026-08-28
+  - neon
+last_updated: 2026-11-15
 ---
 
 # 🏛️ Mulat_Media_Website — Architecture
 
-## 📐 System & Data Flow Architecture
+Current architecture since the 2026-11-02 production cutover (commit `5c67cbb`). The previous Supabase architecture and the pre-cutover migration notes are archived in [[archive/ARCHITECTURE_supabase-era|archive/ARCHITECTURE_supabase-era.md]].
+
+## 📐 System & Data Flow
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          Mulat Media Web Client                        │
-│                   (Semantic HTML5 / Modular CSS3 / ES6+)               │
+│                 Static site (public/, built by npm run build)          │
+│            Vanilla HTML5 / CSS3 / JS  ·  window.MulatSupabase adapter   │
 ├──────────────────────────┬──────────────────────────┬──────────────────┤
-│ Public Reader View       │ Editorial CMS Workflow   │ Student Hub      │
-│ - index.html (Homepage)  │ - login.html             │ - wordle.js      │
-│ - articles.html (Browse) │ - submit-article.html    │ - stats-widget.js│
-│ - article.html (Reader)  │ - review-queue.html      │ - members.html   │
+│ Public reader            │ Newsroom (staff)         │ Extras           │
+│ - index.html             │ - login.html             │ - wordle.js      │
+│ - articles.html + 6 cats │ - submit-*.html (3)      │ - stats-widget.js│
+│ - article.html           │ - review-queue.html      │   (Abacus API)   │
 └──────────────────────────┴──────────┬───────────────┴──────────────────┘
-                                      │
+                                      │ same-origin fetch
                                       ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        Supabase Cloud Platform                         │
-├──────────────────────────┬──────────────────────────┬──────────────────┤
-│ Supabase Auth            │ PostgreSQL Database      │ Supabase Storage │
-│ - Staff Login & Session  │ - profiles (roles/EIC)   │ - article-photos │
-│ - JWT Token Validation   │ - articles (content/tag) │   bucket         │
-│                          │ - reviews & audit log    │                  │
-└──────────────────────────┴──────────────────────────┴──────────────────┘
+│                 Vercel serverless functions (Node 22)                  │
+│  /api/auth/*  → api/auth.js     (restricted Neon Auth proxy)           │
+│  /api/newsroom → api/newsroom.js (JWT check + lib/staff.cjs roles, SQL) │
+│  /api/media/* → api/media.js    (R2 image streaming, CDN cache, ETag)  │
+└──────────────┬──────────────────────────┬──────────────────────────────┘
+               ▼                          ▼                         ▼
+        Neon Auth (OTP)          Neon Postgres 17            Cloudflare R2
+                                 profiles, articles          article photos
 ```
 
----
+## 🔐 Auth & Permissions
+- Staff sign in with eight preprovisioned Neon Auth email/password accounts; email OTP verification is required; public signup is disabled.
+- `api/newsroom.js` verifies the Neon JWT (signature, issuer, audience, expiry, verification and ban state) and checks the server allowlist in `lib/staff.cjs`. Display names and browser-sent roles or author IDs never grant permissions.
+- Roles: Jang Mee is EIC and alone manages acknowledgement content; the developer admin manages other sections; six writers manage only their own ordinary articles. Non-editor submissions and edits are set back to `pending`.
+- Anonymous readers only get `approved` articles.
 
-## 🗄️ Supabase Database Architecture
-1. **`profiles`**: Links to `auth.users`, storing member full names, Editor-in-Chief status (`is_eic`), and permissions (`can_edit_acknowledgement`).
-2. **`articles`**:
-   - `id`, `title`, `slug`, `excerpt`, `body`, `image` (Storage URL), `category` (e.g. `news-current-affairs`, `opinion`, `sports`), `tag`, `read_time`, `author_name`, `status` (`draft`, `pending_review`, `published`), `created_at`.
-3. **`reviews`**: Editorial feedback, review status, reviewer ID, and timestamps.
-4. **Storage Bucket**: `article-photos` configured with public read access and authenticated upload policy.
+## 🗄️ Database (`migrations/001_neon.sql`)
+1. **`profiles`**: `id`, `name`, `is_eic`, `can_edit_acknowledgement`, `created_at`.
+2. **`articles`**: `id` (identity), `category`, `category_name`, `tag`, `title`, `excerpt`, `body` (`text[]`), `image`, `read_time`, `author_id`, `author_name`, `status` (`pending` | `approved`), `reviewed_at`, `reviewed_by`, `created_at`.
+- RLS is enabled and all privileges revoked from `PUBLIC`; there is no Data API and no browser access. Only the server connects.
 
----
+## 🖼️ Media
+- Uploads: `/api/newsroom` (`resource=upload`) returns a short-lived R2 signed PUT URL; JPG, PNG, WebP and GIF up to 10 MB. The stored image path is relative (`/api/media/article-photos/...`).
+- Reads: `GET/HEAD /api/media/article-photos/...` streams from R2 with CDN caching, ETags and strict path/type/size checks, so the app does not depend on `r2.dev` or a separate media domain.
+- R2 CORS (`docs/r2-cors.json`) allows the exact production and preview origins.
 
-## 🎮 Wordle Engine Architecture (`wordle.js`)
-- **Daily Mode**: Selects target word from a curated word list using a deterministic hash of the current calendar date (`YYYY-MM-DD`). Enforces one game per day with a live midnight countdown timer.
-- **Practice Mode**: Generates random 5-letter words with unlimited replays for casual student engagement.
+## 📦 Build & Deploy
+- `npm run build`: esbuild bundles `assets/js/backend-client.source.js` into `assets/js/supabase-client.js` (the legacy filename and `window.MulatSupabase` global are kept so existing pages work), then `scripts/build-site.cjs` writes `public/`, excluding credentials and server files.
+- `vercel.json`: output `public/`, rewrites for `/api/auth/*` and `/api/media/*`, security headers (`nosniff`, `DENY` framing, strict referrer).
+- `.vercelignore` excludes `.brain/`, `MulatMedia/`, `database/`, `tests/`, `.migration-backups/` and `.env*`.
+- Pushing `main` deploys production automatically.
 
-## Migration implementation — 2026-11-02 (not deployed)
-
-The replacement path is browser → Vercel `/api/newsroom` → Neon Postgres, with
-Neon Auth verified JWTs for staff requests and R2 signed uploads for photos.
-`lib/staff.cjs` owns staff/EIC/developer roles; neither display names nor browser
-payloads authorize writes. The existing `MulatSupabase` global and client filename
-remain compatibility aliases only. `npm run build` creates the browser bundle
-and a `public/` static output that excludes credentials and server files.
-Production remains on the architecture above until migration/cutover. See
-`docs/BACKEND_MIGRATION.md` for status, identity mapping, and required rollout checks.
-
-## Production media and preview — 2026-11-02
-
-R2 images are now served through GET/HEAD /api/media/article-photos/... with
-streaming, CDN caching, ETags and strict image/path/size checks. Uploads still
-use short-lived R2 signed PUT URLs and return a relative /api/media path. This
-removes the application dependency on r2.dev and avoids a separate media domain.
-Existing Vercel project has production+preview backend settings; protected
-preview deployed and verified. Production sender setup deferred; public site
-not promoted. See docs/LIVE_ROLLOUT.md.
+## 🎮 Wordle Engine (`assets/js/wordle.js`)
+- **Daily Mode**: Picks the target word from a curated list using the number of days since a fixed anchor date (sine-based index), so it changes at local midnight. One game per day, with a live midnight countdown; progress and stats in `localStorage`.
+- **Practice Mode**: Random 5-letter words with unlimited replays.

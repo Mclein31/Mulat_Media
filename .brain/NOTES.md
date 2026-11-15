@@ -5,21 +5,20 @@ project: Mulat_Media_Website
 tags:
   - notes
   - reference
-last_updated: 2026-11-02
+last_updated: 2026-11-15
 ---
 
 # 📝 Mulat_Media_Website — Technical Notes
 
-## 🔑 Supabase Credentials Configuration
-- Project URL: `https://rjbkeadhidccpduedaqb.supabase.co`
-- Anon Key: Public key initialized in `assets/js/supabase-client.js`
-- Storage Bucket: `article-photos` (Public CDN URL format: `https://.../storage/v1/object/public/article-photos/<filename>`)
+## 🔑 Backend Configuration
+- Server variables (set in Vercel for production and preview): `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_PUBLIC_URL`. Template in `.env.example`; local values in gitignored `.env.local`. Never commit or paste them.
+- The old Supabase project settings are kept in Vercel for rollback. Supabase-era credentials notes and the 2026-11-02 Supabase sign-in outage investigation (NXDOMAIN on the project hostname) are archived in [[archive/NOTES_supabase-era|archive/NOTES_supabase-era.md]].
+- The Supabase source database is only reachable through its Session pooler (direct host is IPv6-only and unreachable from the dev network).
 
-## Sign-in outage investigation — 2026-11-02
-- The deployed `assets/js/supabase-client.js` matched the local file and points to `rjbkeadhidccpduedaqb.supabase.co`.
-- The live login page returned HTTP 200, but the Supabase auth health request failed DNS resolution. Google and Cloudflare DNS-over-HTTPS both returned `NXDOMAIN` for the project hostname.
-- Authentication cannot reach Supabase; password validity has not been tested. Check the project's dashboard status and configured project URL before changing login code or credentials.
-- Paused/deleted project status remains unconfirmed. Supabase documents both as possible causes: https://supabase.com/kb/troubleshooting/nxdomain-error-connecting-to-a-supabase-project
+## 🧩 Gotchas
+- `assets/js/supabase-client.js` is a build artefact despite its name; edit `assets/js/backend-client.source.js` instead.
+- Only touch the dedicated Neon project `blue-bread-38604486`; never modify other Neon projects.
+- Custom SMTP: when the mailbox owner is available, use a dedicated Gmail app password with 2-Step Verification and verify a fresh OTP. Never request the mailbox's primary password or recovery codes.
 
 ## 📰 Editorial Categories
 - `opinion`: Editorials, columns, and reader perspectives.
