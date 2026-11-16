@@ -103,6 +103,21 @@ async function handler(req,res) {
       }
       if(q.category) add('category=?',q.category);
       if(q.id) add('id=?',q.id);
+      if(q.q!==undefined) {
+        if(typeof q.q!=='string') throw httpError(400,'Invalid search query.');
+        const search=q.q.trim();
+        if(q.q.length>500||search.length>100) throw httpError(400,'Search query must be 100 characters or fewer.');
+        if(search) {
+          if(q.scope==='pending'||q.scope==='all'||q.scope==='mine') {
+            throw httpError(400,'Search is only available for published articles.');
+          }
+          if(!clauses.includes("status='approved'")) clauses.push("status='approved'");
+          const escaped=search.replace(/[\\%_]/g,'\\$&');
+          params.push(`%${escaped}%`);
+          const idx=params.length;
+          clauses.push(`(title ILIKE $${idx} ESCAPE '\\' OR excerpt ILIKE $${idx} ESCAPE '\\' OR author_name ILIKE $${idx} ESCAPE '\\')`);
+        }
+      }
       const {rows}=await db().query(`SELECT * FROM public.articles${clauses.length?' WHERE '+clauses.join(' AND '):''} ORDER BY created_at DESC`,params);
       return res.json({articles:rows});
     }

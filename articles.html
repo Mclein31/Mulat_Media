@@ -89,6 +89,36 @@
   </div>
 </nav>
 
+<!-- ARTICLE SEARCH -->
+<section class="article-search-section" aria-label="Search published articles">
+  <div class="wrap">
+    <form class="article-search-form" id="articleSearchForm" role="search">
+      <label for="articleSearchInput" class="article-search-label">Search Stories</label>
+      <div class="article-search-controls">
+        <input
+          type="search"
+          id="articleSearchInput"
+          class="article-search-input"
+          name="q"
+          maxlength="100"
+          placeholder="Search by headline, summary, or author…"
+          autocomplete="off"
+          aria-describedby="articleSearchHint"
+        >
+        <button type="button" id="articleSearchClear" class="article-search-clear" aria-label="Clear search" hidden>Clear</button>
+      </div>
+      <p class="article-search-hint" id="articleSearchHint">Live search across all published articles. Press Escape to clear.</p>
+    </form>
+
+    <div class="article-search-status" id="articleSearchStatus" role="status" aria-live="polite" hidden></div>
+
+    <div class="article-search-results" id="articleSearchResults" aria-busy="false" hidden>
+      <div class="section-label"><span id="articleSearchResultsLabel">Search Results</span></div>
+      <div class="article-row-grid" id="articleSearchGrid"></div>
+    </div>
+  </div>
+</section>
+
 <!-- CATEGORY DIRECTORY -->
 <section class="category-directory">
   <div class="wrap">
@@ -270,6 +300,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', function(){
     MulatNewsroom.renderAuthCta('authCta');
+    MulatNewsroom.initArticleSearch();
   });
 </script>
 <script src="assets/js/stats-widget.js" defer></script>

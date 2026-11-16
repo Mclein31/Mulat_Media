@@ -16,7 +16,7 @@ async function authClient() {
   }
   return authPromise;
 }
-async function request(resource, { method = 'GET', query = {}, body, authenticated = true } = {}) {
+async function request(resource, { method = 'GET', query = {}, body, authenticated = true, signal } = {}) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (authenticated) {
@@ -33,7 +33,7 @@ async function request(resource, { method = 'GET', query = {}, body, authenticat
   }
   const params = new URLSearchParams({ resource, ...query });
   const response = await fetch(`/api/newsroom?${params}`, {
-    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store'
+    method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', signal
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'The request could not be completed.');
@@ -107,8 +107,8 @@ function articleFields(fields) {
   const keys = { category: 'category', categoryName: 'category_name', tag: 'tag', title: 'title', excerpt: 'excerpt', body: 'body', image: 'image', readTime: 'read_time', status: 'status' };
   return Object.fromEntries(Object.entries(keys).filter(([key]) => fields[key] !== undefined).map(([key, column]) => [column, fields[key]]));
 }
-async function articles(query, authenticated = true) {
-  const result = await request('articles', { query, authenticated });
+async function articles(query, authenticated = true, signal) {
+  const result = await request('articles', { query, authenticated, signal });
   return (result.articles || []).map(rowToArticle);
 }
 async function mutateArticle(method, id, fields) {
@@ -131,6 +131,7 @@ window.MulatSupabase = {
   getCurrentMember, changeMemberPassword,
   onMemberChange(callback) { window.addEventListener('focus', () => getCurrentMember().then(callback).catch(() => callback(null))); },
   fetchArticlesForCategory: category => articles({ category }, false),
+  searchArticles: (query, { signal } = {}) => articles({ q: query }, false, signal),
   fetchArticleById: async id => {
     const published = (await articles({ id }, false))[0];
     if (published) return published;

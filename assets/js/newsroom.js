@@ -120,6 +120,11 @@
     }
   }
 
+  async function searchArticles(query, options) {
+    if (!hasSupabase()) throw new Error('Search is temporarily unavailable.');
+    return await global.MulatSupabase.searchArticles(query, options);
+  }
+
   async function getArticleById(id) {
     if (!hasSupabase()) return null;
     try {
@@ -1258,6 +1263,170 @@
     loadArticles();
   }
 
+  /* ---------- articles.html — live debounced article search ---------- */
+  function initArticleSearch() {
+    var form = document.getElementById('articleSearchForm');
+    var input = document.getElementById('articleSearchInput');
+    var clearBtn = document.getElementById('articleSearchClear');
+    var statusEl = document.getElementById('articleSearchStatus');
+    var resultsEl = document.getElementById('articleSearchResults');
+    var resultsLabel = document.getElementById('articleSearchResultsLabel');
+    var gridEl = document.getElementById('articleSearchGrid');
+    if (!form || !input || !statusEl || !resultsEl || !gridEl) return;
+
+    var SEARCH_DEBOUNCE_MS = 250;
+    var MAX_SEARCH_LENGTH = 100;
+    var p = prefix();
+    var debounceTimer = null;
+    var activeController = null;
+    var requestSeq = 0;
+
+    function cancelPending() {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      if (activeController) {
+        activeController.abort();
+        activeController = null;
+      }
+    }
+
+    function setEmptyState() {
+      requestSeq += 1;
+      cancelPending();
+      if (clearBtn) clearBtn.hidden = true;
+      statusEl.hidden = true;
+      statusEl.textContent = '';
+      statusEl.className = 'article-search-status';
+      resultsEl.hidden = true;
+      resultsEl.setAttribute('aria-busy', 'false');
+      gridEl.innerHTML = '';
+    }
+
+    function renderResults(items, query) {
+      resultsEl.setAttribute('aria-busy', 'false');
+      if (!items.length) {
+        resultsEl.hidden = true;
+        gridEl.innerHTML = '';
+        statusEl.hidden = false;
+        statusEl.className = 'article-search-status is-empty';
+        statusEl.textContent = 'No published articles matched "' + query + '". Try a different keyword or author name.';
+        return;
+      }
+
+      var count = items.length;
+      statusEl.hidden = false;
+      statusEl.className = 'article-search-status';
+      statusEl.textContent = count + (count === 1 ? ' published article' : ' published articles') + ' found for "' + query + '".';
+      if (resultsLabel) resultsLabel.textContent = 'Search Results (' + count + ')';
+
+      gridEl.innerHTML = items.map(function (a) {
+        var media = a.image
+          ? '<img src="' + escapeHtml(a.image) + '" alt="' + escapeHtml(a.title) + '" onerror="this.parentElement.innerHTML=\'<div class=&quot;no-image&quot;>' + escapeHtml(a.categoryName) + '</div>\'">'
+          : '<div class="no-image">' + escapeHtml(a.categoryName) + '</div>';
+        var tagText = a.categoryName && a.tag && a.tag !== a.categoryName
+          ? escapeHtml(a.categoryName) + ' &middot; ' + escapeHtml(a.tag)
+          : escapeHtml(a.tag || a.categoryName);
+        return (
+          '<article class="story-card">' +
+          '  <div class="story-card-media">' + media + '</div>' +
+          '  <span class="tag">' + tagText + '</span>' +
+          '  <h3>' + escapeHtml(a.title) + '</h3>' +
+          '  <p>' + escapeHtml(a.excerpt) + '</p>' +
+          '  <div class="meta">' + metaLine(a) + '</div>' +
+          '  <a href="' + p + 'article.html?id=' + encodeURIComponent(a.id) + '" class="read-more">Continue Reading &rarr;</a>' +
+          '</article>'
+        );
+      }).join('');
+      resultsEl.hidden = false;
+    }
+
+    async function runSearch(rawQuery) {
+      var query = String(rawQuery || '').trim();
+      if (!query) {
+        setEmptyState();
+        return;
+      }
+      if (query.length > MAX_SEARCH_LENGTH) {
+        query = query.slice(0, MAX_SEARCH_LENGTH);
+      }
+
+      cancelPending();
+      var seq = ++requestSeq;
+      if (clearBtn) clearBtn.hidden = false;
+      resultsEl.hidden = true;
+      resultsEl.setAttribute('aria-busy', 'true');
+      gridEl.innerHTML = '';
+      statusEl.hidden = false;
+      statusEl.className = 'article-search-status is-loading';
+      statusEl.textContent = 'Searching published articles…';
+
+      var controller = typeof AbortController === 'function' ? new AbortController() : null;
+      activeController = controller;
+
+      try {
+        var items = await searchArticles(query, controller ? { signal: controller.signal } : undefined);
+        if (seq !== requestSeq) return;
+        activeController = null;
+        renderResults(items, query);
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        if (seq !== requestSeq) return;
+        activeController = null;
+        resultsEl.hidden = true;
+        resultsEl.setAttribute('aria-busy', 'false');
+        gridEl.innerHTML = '';
+        statusEl.hidden = false;
+        statusEl.className = 'article-search-status is-error';
+        statusEl.textContent = (err && err.message) ? err.message : 'Could not search articles right now. Please try again.';
+      }
+    }
+
+    input.addEventListener('input', function () {
+      var raw = input.value || '';
+      if (clearBtn) clearBtn.hidden = !raw;
+      if (!raw.trim()) {
+        setEmptyState();
+        return;
+      }
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () {
+        debounceTimer = null;
+        runSearch(input.value);
+      }, SEARCH_DEBOUNCE_MS);
+    });
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && input.value) {
+        e.preventDefault();
+        input.value = '';
+        setEmptyState();
+      }
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!input.value.trim()) {
+        setEmptyState();
+        return;
+      }
+      runSearch(input.value);
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        input.value = '';
+        setEmptyState();
+        input.focus();
+      });
+    }
+
+    if (input.value && input.value.trim()) {
+      runSearch(input.value);
+    }
+  }
+
   global.MulatNewsroom = {
     CATEGORIES: CATEGORIES,
     isJangMee: isJangMee,
@@ -1271,6 +1440,7 @@
     ensureMember: ensureMember,
     refreshMember: refreshMember,
     getArticlesForCategory: getArticlesForCategory,
+    searchArticles: searchArticles,
     getArticleById: getArticleById,
     addArticle: addArticle,
     updateArticle: updateArticle,
@@ -1286,6 +1456,7 @@
     initSubmitSpecialFeatureForm: initSubmitSpecialFeatureForm,
     initReviewQueuePage: initReviewQueuePage,
     renderCategoryFeed: renderCategoryFeed,
-    initCategoryTabsScroll: initCategoryTabsScroll
+    initCategoryTabsScroll: initCategoryTabsScroll,
+    initArticleSearch: initArticleSearch
   };
 })(window);

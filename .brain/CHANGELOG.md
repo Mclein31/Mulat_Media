@@ -10,6 +10,11 @@ last_updated: 2026-11-16
 
 # 📜 Mulat_Media_Website — Changelog
 
+## 2026-11-16 — Article search & npm audit review
+- **Added**: Parameterized, length-capped `q` search filter (`title`, `excerpt`, `author_name`, approved articles only) in `api/newsroom.js`, `searchArticles` in `assets/js/backend-client.source.js`, and an accessible 250ms debounced search bar with loading/empty/no-results/error states on `articles.html` (`articles.css`, `assets/js/newsroom.js`).
+- **Added**: API and UI regression tests in `tests/search.test.cjs`.
+- **Reviewed**: All 7 low-severity `npm audit` findings (`deepmerge` → `html-to-text` → `@react-email/render` → `@react-email/components` → `@daveyplate/better-auth-ui` → `@neondatabase/auth-ui` → `@neondatabase/auth`); no non-breaking fix available, left dependencies unchanged and recorded outcomes in `TODO.md`.
+
 ## 2026-11-16 — README update, RSS feed, share bar, and reading progress
 - **Changed**: Rewrote `README.md` to document the Neon Postgres, Neon Auth proxy, Cloudflare R2, and Vercel API architecture plus local build/lint/test commands.
 - **Added**: RSS 2.0 feed endpoint (`api/feed.js`) serving approved articles, `/feed.xml` rewrite in `vercel.json`, and `<link rel="alternate" type="application/rss+xml">` discovery tags on public HTML pages.
