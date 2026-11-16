@@ -10,7 +10,7 @@ tags:
   - neon
   - journalism
   - wordle
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 ---
 
 # 📰 Mulat_Media_Website — Project Context
@@ -33,7 +33,7 @@ last_updated: 2026-11-15
 
 ## 💻 Tech Stack & Dependencies
 - **Frontend Core**: Vanilla semantic HTML5, modular CSS3, vanilla JavaScript (no framework).
-- **Backend**: Vercel serverless functions on Node 22 (`api/auth.js`, `api/newsroom.js`, `api/media.js`).
+- **Backend**: Vercel serverless functions on Node 22 (`api/auth.js`, `api/newsroom.js`, `api/media.js`, `api/feed.js`).
   - **Database**: Neon Postgres 17 (dedicated project `mulat-media`, `blue-bread-38604486`, AWS Singapore) via `pg` 8.23.1. Schema in `migrations/001_neon.sql` (`profiles`, `articles`).
   - **Auth**: Neon Auth (`@neondatabase/auth` 0.6.0-beta) with email OTP verification; JWTs verified server-side with `jose`.
   - **Media**: Cloudflare R2 via `@aws-sdk/client-s3` / `s3-request-presigner` (signed PUT uploads; reads streamed through `/api/media`).
@@ -74,6 +74,5 @@ last_updated: 2026-11-15
 
 ## ⚠️ Known Limitations
 - Login email codes come from Neon's shared sender until a custom SMTP sender is configured.
-- `README.md` still describes the Supabase backend.
 - Pushing to `main` deploys to production automatically; do not push just to test.
 - Seven low-severity transitive `npm audit` findings remained at the 2026-11-02 rollout.

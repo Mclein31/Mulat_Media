@@ -5,7 +5,7 @@ project: Mulat_Media_Website
 tags:
   - todo
   - backlog
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 ---
 
 # 📋 Mulat_Media_Website — TODO & Task Tracker
@@ -16,13 +16,9 @@ last_updated: 2026-11-15
 
 ## 🟡 Medium Priority
 - [ ] Retire the old Supabase project and its Vercel settings after the rollback window, keeping `.migration-backups/`.
-- [ ] Update `README.md`, which still describes the Supabase backend.
-- [ ] Add RSS feed generator (`feed.xml`) for syndication with student news aggregator apps.
 - [ ] Implement article search filter with live debounce (originally planned on Supabase full-text search; would now go through `/api/newsroom` and Neon Postgres).
 
 ## 🟢 Low Priority
-- [ ] Add social media share buttons (Facebook, X, LinkedIn, Copy Link) on `article.html`.
-- [ ] Add estimated reading progress indicator bar at the top of long-form articles.
 - [ ] Review the seven low-severity transitive `npm audit` findings.
 
 ## 💡 Future Ideas
@@ -30,6 +26,10 @@ last_updated: 2026-11-15
 - [ ] Push notification alerts for breaking campus news announcements.
 
 ## ✅ Done
+- [x] Update `README.md`, which still describes the Supabase backend. — done 2026-11-16: Rewrote `README.md` for Neon Postgres, Neon Auth proxy, Cloudflare R2 media streaming, `/feed.xml`, and local build/lint/test scripts.
+- [x] Add RSS feed generator (`feed.xml`) for syndication with student news aggregator apps. — done 2026-11-16: Added `api/feed.js` queried from Neon `status='approved'` articles, routed `/feed.xml` in `vercel.json`, and linked `<link rel="alternate" type="application/rss+xml">` across public HTML pages.
+- [x] Add social media share buttons (Facebook, X, LinkedIn, Copy Link) on `article.html`. — done 2026-11-16: Added zero-tracker intent links and accessible Copy Link control in `article.html`, `articles.css`, and `assets/js/article-page.js`.
+- [x] Add estimated reading progress indicator bar at the top of long-form articles. — done 2026-11-16: Added `role="progressbar"` top indicator in `article.html`/`articles.css`/`assets/js/article-page.js` shown only on long articles with `prefers-reduced-motion` support.
 - [x] Prevent unapproved drafts from appearing publicly: the server returns only `status='approved'` articles to anonymous readers (covered by `tests/api.test.cjs`). Replaces the Supabase-era "verify RLS policies" item.
 - [x] Create staff accounts: eight Neon Auth accounts provisioned 2026-11-02 (replaces "onboard staff with Supabase member accounts").
 - [x] Migrate backend from Supabase to Neon + R2 and deploy to production (2026-11-02, `5c67cbb`).

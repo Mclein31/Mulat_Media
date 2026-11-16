@@ -5,10 +5,16 @@ project: Mulat_Media_Website
 tags:
   - changelog
   - history
-last_updated: 2026-11-15
+last_updated: 2026-11-16
 ---
 
 # 📜 Mulat_Media_Website — Changelog
+
+## 2026-11-16 — README update, RSS feed, share bar, and reading progress
+- **Changed**: Rewrote `README.md` to document the Neon Postgres, Neon Auth proxy, Cloudflare R2, and Vercel API architecture plus local build/lint/test commands.
+- **Added**: RSS 2.0 feed endpoint (`api/feed.js`) serving approved articles, `/feed.xml` rewrite in `vercel.json`, and `<link rel="alternate" type="application/rss+xml">` discovery tags on public HTML pages.
+- **Added**: Zero-tracker share buttons (Facebook, X, LinkedIn, Copy Link) and a top reading-progress bar on long articles (`article.html`, `articles.css`, `assets/js/article-page.js`) with ARIA attributes, keyboard accessibility, and `prefers-reduced-motion` support.
+- **Added**: Regression tests in `tests/feed.test.cjs` and `tests/article-page.test.cjs`.
 
 ## 2026-11-15 — Brain cleanup
 - Rewrote `PROJECT_CONTEXT.md` and `ARCHITECTURE.md` for the live Neon Postgres + Neon Auth + Cloudflare R2 backend (they still described Supabase as current). Corrected schema (no `reviews` table or `slug`; status is `pending`/`approved`), fonts (self-hosted, Source Sans 3 not Source Serif 4), and added the API, build, test and deploy layout.
