@@ -40,7 +40,7 @@
       "label": "Category pages",
       "kind": "screen",
       "layer": "frontend",
-      "detail": "Articles listing plus the six section pages (news, opinion, sports, etc.).",
+      "detail": "Articles listing with live search plus the six section pages (news, opinion, sports, etc.).",
       "file": "articles.html"
     },
     {
@@ -48,7 +48,7 @@
       "label": "Article page",
       "kind": "screen",
       "layer": "frontend",
-      "detail": "Single article reader driven by the URL query.",
+      "detail": "Single article reader driven by the URL query, with share buttons and reading progress.",
       "file": "article.html"
     },
     {
@@ -104,7 +104,7 @@
       "label": "Newsroom client",
       "kind": "component",
       "layer": "frontend",
-      "detail": "Browser controller for auth, article CRUD and photo upload against the API.",
+      "detail": "Browser controller for auth, article CRUD, live search and photo upload against the API.",
       "file": "assets/js/newsroom.js"
     },
     {
@@ -112,7 +112,7 @@
       "label": "Article renderer",
       "kind": "component",
       "layer": "frontend",
-      "detail": "Fetches and renders a single article by ID.",
+      "detail": "Fetches and renders a single article by ID, share actions and reading progress.",
       "file": "assets/js/article-page.js"
     },
     {
@@ -120,8 +120,16 @@
       "label": "/api/newsroom",
       "kind": "api",
       "layer": "backend",
-      "detail": "Articles CRUD, member lookup, eligibility check, config and signed photo upload URLs.",
+      "detail": "Articles CRUD and search, member lookup, eligibility check, config and signed photo upload URLs.",
       "file": "api/newsroom.js"
+    },
+    {
+      "id": "api.feed",
+      "label": "/api/feed",
+      "kind": "api",
+      "layer": "backend",
+      "detail": "Serves the RSS 2.0 feed (/feed.xml) of the 50 latest approved articles.",
+      "file": "api/feed.js"
     },
     {
       "id": "api.auth",
@@ -269,7 +277,7 @@
     {
       "from": "ui.categories",
       "to": "ui.newsroom",
-      "label": "loads articles"
+      "label": "loads, searches"
     },
     {
       "from": "ui.article",
@@ -425,6 +433,21 @@
       "from": "dec.guess",
       "to": "ui.wordle",
       "label": "no: next row or lose"
+    },
+    {
+      "from": "actor.reader",
+      "to": "api.feed",
+      "label": "reads /feed.xml"
+    },
+    {
+      "from": "ext.vercel",
+      "to": "api.feed",
+      "label": "rewrites /feed.xml"
+    },
+    {
+      "from": "api.feed",
+      "to": "db.neon",
+      "label": "reads approved"
     }
   ],
   "flows": [
@@ -489,6 +512,14 @@
         "svc.staff",
         "dec.staff",
         "dec.editor",
+        "db.neon"
+      ]
+    },
+    {
+      "name": "Read RSS feed",
+      "steps": [
+        "actor.reader",
+        "api.feed",
         "db.neon"
       ]
     }
